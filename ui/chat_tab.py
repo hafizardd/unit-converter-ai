@@ -1,6 +1,7 @@
 import streamlit as st
 
 from ai.client import reply
+from ui.chat_format import normalize_math
 
 
 def show_calculations(calculations):
@@ -20,7 +21,8 @@ def chat_tab():
         st.session_state.messages = []
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.write(message["content"])
+            content = message["content"]
+            st.markdown(normalize_math(content) if message["role"] == "assistant" else content)
             show_calculations(message.get("calculations", []))
     prompt = st.chat_input("Contoh: ubah 1 Pa menjadi bar", max_chars=500)
     if prompt:
@@ -36,7 +38,7 @@ def chat_tab():
                 st.session_state.chat_requests += 1
                 with st.spinner("Menyiapkan jawaban..."):
                     response = reply(prompt, st.session_state.messages)
-            st.write(response["answer"])
+            st.markdown(normalize_math(response["answer"]))
             show_calculations(response["calculations"])
         st.session_state.messages += [
             {"role": "user", "content": prompt},
