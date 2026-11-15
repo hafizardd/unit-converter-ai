@@ -10,8 +10,7 @@ untuk Llama 8B yang sudah dihentikan pada free/developer tier. Periksa halaman
 [depresiasi](https://console.groq.com/docs/deprecations) sebelum acara.
 
 `ai/config.py` membaca `.env` pada root repo. Isi `GROQ_API_KEY` dengan satu key
-Groq milikmu. Key tidak dicetak. Konfigurasi daftar key dan indeks hanya dipakai
-pada starter peserta workshop. Mulai ulang setelah mengedit `.env`.
+Groq milikmu. Key tidak dicetak. Mulai ulang setelah mengedit `.env`.
 
 Alur panggilan biasa:
 
