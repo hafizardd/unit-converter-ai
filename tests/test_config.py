@@ -10,18 +10,35 @@ def empty_environment(monkeypatch):
         monkeypatch.delenv(name, raising=False)
 
 
-def test_select_one_key_without_rotation(monkeypatch):
-    monkeypatch.setenv("GROQ_API_KEYS", "test-first,test-second")
-    monkeypatch.setenv("GROQ_KEY_INDEX", "1")
-    assert config.get_settings() == ("test-second", "openai/gpt-oss-20b")
+def test_read_single_key_and_default_model(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "  test-personal  ")
+    assert config.get_settings() == ("test-personal", "openai/gpt-oss-20b")
 
 
-@pytest.mark.parametrize("index", ["-1", "2", "not-an-index"])
-def test_reject_invalid_key_index(monkeypatch, index):
+def test_workshop_settings_do_not_override_single_key(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-personal")
     monkeypatch.setenv("GROQ_API_KEYS", "test-first,test-second")
-    monkeypatch.setenv("GROQ_KEY_INDEX", index)
-    with pytest.raises(ValueError):
+    monkeypatch.setenv("GROQ_KEY_INDEX", "not-used")
+    assert config.get_settings()[0] == "test-personal"
+
+
+def test_workshop_list_alone_does_not_supply_personal_key(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEYS", "test-first,test-second")
+    with pytest.raises(ValueError, match="API key"):
         config.get_settings()
+
+
+@pytest.mark.parametrize("key", ["", "   ", "YOUR_GROQ_API_KEY"])
+def test_reject_empty_or_placeholder_key(monkeypatch, key):
+    monkeypatch.setenv("GROQ_API_KEY", key)
+    with pytest.raises(ValueError, match="API key"):
+        config.get_settings()
+
+
+def test_model_can_be_configured(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-personal")
+    monkeypatch.setenv("GROQ_MODEL", "test-model")
+    assert config.get_settings() == ("test-personal", "test-model")
 
 
 def test_missing_key_is_actionable():

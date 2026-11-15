@@ -32,14 +32,13 @@ Salin template `.env` sekali saja; jangan menimpa file yang sudah terisi.
 Lengkapi key secara privat sebelum mencoba AI; konverter berjalan tanpa key.
 
 ```dotenv
-GROQ_API_KEY=YOUR_KEY
-GROQ_API_KEYS=
-GROQ_KEY_INDEX=0
+GROQ_API_KEY=YOUR_GROQ_API_KEY
 GROQ_MODEL=openai/gpt-oss-20b
 ```
 
-Untuk banyak key, isi `GROQ_API_KEYS` dipisahkan koma dan pilih lewat indeks.
-Semua key satu organisasi berbagi kuota. Mulai ulang setelah mengubah `.env`.
+Ganti `YOUR_GROQ_API_KEY` dengan satu key milikmu. Versi GitHub hanya membaca
+`GROQ_API_KEY`; daftar key dan indeks dipakai pada starter peserta workshop.
+Mulai ulang aplikasi setelah mengubah `.env`.
 
 ## Urutan belajar
 
