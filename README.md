@@ -37,7 +37,7 @@ GROQ_MODEL=openai/gpt-oss-20b
 ```
 
 Ganti `YOUR_GROQ_API_KEY` dengan satu key milikmu. Versi GitHub hanya membaca
-`GROQ_API_KEY`; daftar key dan indeks dipakai pada starter peserta workshop.
+`GROQ_API_KEY`.
 Mulai ulang aplikasi setelah mengubah `.env`.
 
 ## Urutan belajar
