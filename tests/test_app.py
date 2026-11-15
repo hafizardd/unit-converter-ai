@@ -30,3 +30,18 @@ def test_chat_refusal_without_network():
     app.chat_input[0].set_value("Buat puisi cinta").run()
     assert not app.exception
     assert "konversi" in app.session_state.messages[-1]["content"]
+
+
+def test_equations_in_new_answer_and_history(monkeypatch):
+    from ui import chat_tab
+
+    equation = r"Hasil \(5 \times 1000\) dan \[x = 0.725\]"
+    monkeypatch.setattr(chat_tab, "reply", lambda *args: {"answer": equation, "calculations": []})
+    app = AppTest.from_file(str(APP), default_timeout=15).run()
+    app.chat_input[0].set_value("Beri contoh konversi tekanan").run()
+    assert not app.exception
+    expected = "Hasil $5 \\times 1000$ dan \n\n$$\nx = 0.725\n$$"
+    assert any(item.value == expected for item in app.markdown)
+    app.run()  # Riwayat dirender dengan jalur yang sama pada rerun.
+    assert not app.exception
+    assert any(item.value == expected for item in app.markdown)
