@@ -3,15 +3,19 @@
 import re
 
 TOKENS = re.compile(
-    r"```.*?```|`[^`\n]*`|\\\[(?P<block>.*?)\\\]|\\\((?P<inline>.*?)\\\)",
+    r"```.*?```|`[^`\n]*`|\n{0,2}(?:\\\[(?P<block>.*?)\\\]|"
+    r"\$\$(?P<dollar_block>.*?)\$\$)\n{0,2}|\\\((?P<inline>.*?)\\\)",
     re.DOTALL,
 )
 
 
 def normalize_math(text):
     def replace(match):
-        if match.group("block") is not None:
-            return "\n\n$$\n" + match.group("block").strip() + "\n$$\n\n"
+        block = match.group("block")
+        if block is None:
+            block = match.group("dollar_block")
+        if block is not None:
+            return "\n\n$$\n" + block.strip() + "\n$$\n\n"
         if match.group("inline") is not None:
             return "$" + match.group("inline").strip() + "$"
         return match.group(0)  # Contoh kode tetap tampil sebagai kode.

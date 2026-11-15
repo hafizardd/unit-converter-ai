@@ -26,3 +26,11 @@ def test_supported_delimiters_and_preserved_text(source, expected):
     result = normalize_math(source)
     assert result == expected
     assert normalize_math(result) == result
+
+
+def test_model_display_equation_on_one_line():
+    source = r"$$5 \text{ kPa} \times \frac{1000}{6894.757293168} \approx 0.725 \text{ psi}.$$"
+    expected = "\n\n$$\n" + source[2:-2] + "\n$$\n\n"
+    result = normalize_math(source)
+    assert result == expected
+    assert normalize_math(result) == result
