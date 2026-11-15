@@ -78,7 +78,7 @@ def reply(prompt, history):
         answer = message.content or "Belum ada penjelasan. Gunakan tab konverter untuk hasil angka."
         return {"answer": answer, "calculations": calculations}
     except ValueError:
-        answer = "Konfigurasi AI belum siap. Periksa .env dan indeks key."
+        answer = "Konfigurasi AI belum siap. Isi GROQ_API_KEY di .env."
     except AuthenticationError:
         answer = "API key tidak diterima. Periksa konfigurasi lokal."
     except RateLimitError:

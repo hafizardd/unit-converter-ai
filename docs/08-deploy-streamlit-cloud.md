@@ -10,9 +10,8 @@ secara lokal lebih dahulu. Jangan memakai key workshop yang sudah dicabut.
 5. Pada pengaturan Secrets, isi konfigurasi TOML berikut secara privat.
 
 ```toml
-GROQ_API_KEY = "YOUR_KEY"
+GROQ_API_KEY = "YOUR_GROQ_API_KEY"
 GROQ_MODEL = "openai/gpt-oss-20b"
-GROQ_KEY_INDEX = "0"
 ```
 
 Secret tingkat atas di Community Cloud tersedia sebagai environment variables;
