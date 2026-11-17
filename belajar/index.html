@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Belajar Konversi Satuan</title>
+<style>
+:root {
+  --bg: #fbfaf7;
+  --panel: #ffffff;
+  --ink: #1f2430;
+  --muted: #566070;
+  --line: #d9dde4;
+  --soft: #f0f2f6;
+  --accent: #3b3f9e;
+  --accent-soft: #e9eafa;
+  --ok: #1b6b3a;
+  --ok-soft: #e3f4ea;
+  --bad: #a3221f;
+  --bad-soft: #fbe9e8;
+  --warn: #8a5a00;
+  --warn-soft: #fff3d6;
+  --focus: #0a58ca;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-math: "Cambria Math", "STIX Two Math", "Latin Modern Math", Cambria, Georgia, serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+}
+body[data-topic="tekanan"] { --accent: #0b5f8a; --accent-soft: #e2f1f9; }
+body[data-topic="gaya"] { --accent: #a64300; --accent-soft: #fdeede; }
+body[data-topic="panjang"] { --accent: #1d6b3a; --accent-soft: #e3f4ea; }
+body[data-topic="suhu"] { --accent: #a3224f; --accent-soft: #fbe6ee; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; text-wrap: balance; }
+h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0 0 .85rem; max-width: 70ch; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.skip {
+  position: absolute; left: 8px; top: -60px; z-index: 20;
+  background: var(--ink); color: #fff; padding: .5rem .8rem; border-radius: 6px;
+}
+.skip:focus { top: 8px; }
+
+.topbar { background: var(--panel); border-bottom: 1px solid var(--line); }
+.topbar-in {
+  max-width: 1120px; margin: 0 auto;
+  padding: .7rem max(16px, env(safe-area-inset-left, 0px)) .5rem;
+}
+.brand { font-weight: 700; font-size: 1.05rem; margin-bottom: .4rem; }
+.brand small { font-weight: 400; color: var(--muted); margin-left: .5rem; }
+.nav { display: flex; flex-wrap: wrap; gap: .35rem; }
+.nav a {
+  text-decoration: none; color: var(--ink);
+  padding: .4rem .8rem; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--panel); font-size: .95rem;
+}
+.nav a:hover { background: var(--soft); }
+.nav a[aria-current="page"] {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+
+main {
+  max-width: 1120px; margin: 0 auto;
+  padding: 1.5rem max(16px, env(safe-area-inset-left, 0px)) 4rem;
+}
+main:focus { outline: none; }
+.page-head { margin-bottom: 1.2rem; }
+.lead { font-size: 1.1rem; color: var(--muted); }
+.section { margin: 2.2rem 0; }
+.section > h2 { padding-bottom: .35rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+.kicker { text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; color: var(--accent); font-weight: 700; }
+.notice {
+  border-left: 4px solid var(--warn); background: var(--warn-soft);
+  padding: .6rem .9rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1rem 0;
+}
+.notice.info { border-color: var(--accent); background: var(--accent-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 480px) {
+  .nav a { padding: .35rem .65rem; font-size: .9rem; }
+}
+</style>
+</head>
+<body data-topic="mulai">
+<a class="skip" id="skip" href="#">Lewati ke isi halaman</a>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">Belajar Konversi Satuan <small>tekanan · gaya · panjang · suhu</small></div>
+    <nav class="nav" id="nav" aria-label="Navigasi utama"></nav>
+  </div>
+</header>
+<main id="utama" tabindex="-1"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script id="app">
+'use strict';
+
+/* ---------- Pembantu DOM ---------- */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v === null || v === undefined) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'html') el.innerHTML = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  appendKids(el, kids);
+  return el;
+}
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function s(tag, attrs, ...kids) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v === null || v === undefined) continue;
+    el.setAttribute(k, v);
+  }
+  appendKids(el, kids);
+  return el;
+}
+function appendKids(el, kids) {
+  for (const kid of kids.flat(Infinity)) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+}
+function announce(text) {
+  const live = document.getElementById('live');
+  live.textContent = '';
+  setTimeout(() => { live.textContent = text; }, 30);
+}
+
+/* ---------- Navigasi ---------- */
+const ROUTES = [
+  { id: 'mulai', label: 'Mulai', topic: 'mulai' },
+  { id: 'tekanan', label: 'Tekanan', topic: 'tekanan' },
+  { id: 'gaya', label: 'Gaya', topic: 'gaya' },
+  { id: 'panjang', label: 'Panjang', topic: 'panjang' },
+  { id: 'suhu', label: 'Suhu', topic: 'suhu' },
+  { id: 'kuis', label: 'Kuis gabungan', topic: 'mulai' },
+  { id: 'rumus', label: 'Rumus', topic: 'mulai' },
+];
+const PAGES = {};
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  nav.replaceChildren(...ROUTES.map((r) => h('a', { href: '#' + r.id, 'data-route': r.id }, r.label)));
+}
+
+function route() {
+  const id = location.hash.slice(1);
+  const current = ROUTES.find((r) => r.id === id) || ROUTES[0];
+  document.body.dataset.topic = current.topic;
+  document.title = current.label + ' · Belajar Konversi Satuan';
+  for (const a of document.querySelectorAll('#nav a')) {
+    if (a.dataset.route === current.id) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+  const main = document.getElementById('utama');
+  main.replaceChildren();
+  const render = PAGES[current.id];
+  if (render) render(main);
+  else main.append(h('p', {}, 'Halaman ini sedang disusun.'));
+  window.scrollTo(0, 0);
+  announce('Membuka halaman ' + current.label);
+}
+
+function boot() {
+  buildNav();
+  document.getElementById('skip').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('utama').focus();
+  });
+  window.addEventListener('hashchange', route);
+  route();
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
