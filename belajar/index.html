@@ -110,6 +110,537 @@ main:focus { outline: none; }
 <main id="utama" tabindex="-1"></main>
 <div id="live" class="sr" aria-live="polite"></div>
 
+<script id="core">
+/* Mesin hitung: fungsi murni tanpa DOM, diuji terhadap konverter Python. */
+const Core = (function () {
+  'use strict';
+
+  /* ---------- Data satuan (faktor sama dengan converters/*.py) ---------- */
+  const CATEGORIES = {
+    pressure: {
+      name: 'Tekanan', base: 'Pa',
+      units: {
+        Pa: { label: 'Pa', name: 'pascal', f: 1 },
+        kPa: { label: 'kPa', name: 'kilopascal', f: 1000 },
+        MPa: { label: 'MPa', name: 'megapascal', f: 1000000 },
+        bar: { label: 'bar', name: 'bar', f: 100000 },
+        mbar: { label: 'mbar', name: 'milibar', f: 100, adv: true },
+        atm: { label: 'atm', name: 'atmosfer standar', f: 101325 },
+        psi: { label: 'psi', name: 'pound-gaya per inci persegi', f: 6894.757293168 },
+        Torr: { label: 'Torr', name: 'torr', f: 101325 / 760, adv: true },
+      },
+    },
+    force: {
+      name: 'Gaya', base: 'N',
+      units: {
+        N: { label: 'N', name: 'newton', f: 1 },
+        kN: { label: 'kN', name: 'kilonewton', f: 1000 },
+        kgf: { label: 'kgf', name: 'kilogram-gaya', f: 9.80665 },
+        lbf: { label: 'lbf', name: 'pound-gaya', f: 4.4482216152605 },
+        dyne: { label: 'dyne', name: 'dyne', f: 1e-5, adv: true },
+        kip: { label: 'kip', name: 'kip (1.000 lbf)', f: 4448.2216152605, adv: true },
+      },
+    },
+    length: {
+      name: 'Panjang', base: 'm',
+      units: {
+        nm: { label: 'nm', name: 'nanometer', f: 1e-9, adv: true },
+        um: { label: 'µm', name: 'mikrometer', f: 1e-6, adv: true },
+        mm: { label: 'mm', name: 'milimeter', f: 0.001 },
+        cm: { label: 'cm', name: 'sentimeter', f: 0.01 },
+        m: { label: 'm', name: 'meter', f: 1 },
+        km: { label: 'km', name: 'kilometer', f: 1000 },
+        in: { label: 'in', name: 'inci', f: 0.0254 },
+        ft: { label: 'ft', name: 'kaki (feet)', f: 0.3048 },
+        yd: { label: 'yd', name: 'yard', f: 0.9144, adv: true },
+        mi: { label: 'mi', name: 'mil', f: 1609.344 },
+        nmi: { label: 'nmi', name: 'mil laut', f: 1852, adv: true },
+      },
+    },
+  };
+  const TEMP_UNITS = {
+    C: { label: '°C', name: 'derajat Celsius', freeze: 0, boil: 100 },
+    F: { label: '°F', name: 'derajat Fahrenheit', freeze: 32, boil: 212 },
+    K: { label: 'K', name: 'kelvin', freeze: 273.15, boil: 373.15 },
+    R: { label: '°R', name: 'derajat Rankine', freeze: 491.67, boil: 671.67, adv: true },
+  };
+  const DELTA_PER_C = { C: 1, K: 1, F: 1.8, R: 1.8 };
+  const ABS_ZERO_C = -273.15;
+
+  /* ---------- Format dan baca angka (gaya Indonesia) ---------- */
+  const SUP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '-': '⁻' };
+
+  function groupThousands(intPart) {
+    return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function fmt(n, digits) {
+    digits = digits || 8;
+    if (!Number.isFinite(n)) return String(n);
+    if (n === 0) return '0';
+    const neg = n < 0 ? '−' : '';
+    const a = Math.abs(n);
+    if (a < 1e-4 || a >= 1e15) {
+      const parts = a.toExponential(digits - 1).split('e');
+      let mant = parts[0].indexOf('.') >= 0 ? parts[0].replace(/0+$/, '').replace(/\.$/, '') : parts[0];
+      mant = mant.replace('.', ',');
+      const exp = String(parseInt(parts[1], 10)).split('').map((c) => SUP[c]).join('');
+      return neg + (mant === '1' ? '' : mant + ' × ') + '10' + exp;
+    }
+    const text = String(Number(a.toPrecision(digits)));
+    const pieces = text.split('.');
+    return neg + groupThousands(pieces[0]) + (pieces[1] ? ',' + pieces[1] : '');
+  }
+
+  function isRounded(n, digits) {
+    digits = digits || 8;
+    if (!Number.isFinite(n) || n === 0) return false;
+    const a = Math.abs(n);
+    return Math.abs(Number(a.toPrecision(digits)) - a) > 1e-12 * a;
+  }
+
+  /* "= 12,5" atau "≈ 12,345679" bila angka tampilan dibulatkan. */
+  function eqv(n, digits) {
+    return (isRounded(n, digits) ? '≈ ' : '= ') + fmt(n, digits);
+  }
+
+  /* Hasil tampilan: teks dengan tanda ≈ bila dibulatkan. */
+  function shown(n, digits) {
+    return (isRounded(n, digits) ? '≈ ' : '') + fmt(n, digits);
+  }
+
+  function fail(error, extra) {
+    return Object.assign({ ok: false, error }, extra || {});
+  }
+
+  function parseNumber(text) {
+    if (typeof text !== 'string') return fail('Isi angka dulu.', { empty: true });
+    const raw = text.trim().replace(/−/g, '-');
+    if (raw === '') return fail('Isi angka dulu.', { empty: true });
+    if (/\s/.test(raw)) return fail('Tulis angka tanpa spasi, misalnya 1000 atau 1,5.');
+    if (/[.,].*[.,]/.test(raw)) {
+      return fail('Jangan pakai pemisah ribuan. Tulis 1000,5 atau 1000.5, bukan 1.000,5.');
+    }
+    const m = /^([+-]?)(\d*)([.,]?)(\d*)(?:[eE]([+-]?\d+))?$/.exec(raw);
+    if (!m || (m[2] === '' && m[4] === '')) {
+      return fail('Format angka tidak dikenali. Contoh yang benar: 12, 1,5, 1.5, atau 1e-3.');
+    }
+    const intPart = m[2];
+    const sep = m[3];
+    const frac = m[4];
+    if (sep && frac.length === 3 && intPart !== '' && intPart !== '0' && m[5] === undefined) {
+      return fail(
+        'Angka "' + raw + '" ambigu (ribuan atau desimal?). Tulis ' + intPart + ' jika maksudnya ' +
+        intPart + ' koma ' + frac + ', atau tulis ' + intPart + frac + ' jika maksudnya ribuan.'
+      );
+    }
+    const normalized = m[1] + (intPart || '0') + (frac ? '.' + frac : '') + (m[5] !== undefined ? 'e' + m[5] : '');
+    const value = Number(normalized);
+    if (!Number.isFinite(value)) return fail('Angka terlalu besar.');
+    return { ok: true, value };
+  }
+
+  /* ---------- Validasi dan konversi (sama dengan Python) ---------- */
+  function validateNumber(x) {
+    if (typeof x !== 'number') throw new Error('Nilai harus berupa angka.');
+    if (!Number.isFinite(x)) throw new Error('Nilai harus terbatas; NaN dan infinity tidak didukung.');
+    return x;
+  }
+
+  function convertLinear(cat, value, from, to) {
+    validateNumber(value);
+    const c = CATEGORIES[cat];
+    if (!c || !(from in c.units) || !(to in c.units)) {
+      throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    }
+    return validateNumber((value * c.units[from].f) / c.units[to].f);
+  }
+
+  function toCelsius(value, unit) {
+    if (unit === 'C') return value;
+    if (unit === 'F') return ((value - 32) * 5) / 9;
+    if (unit === 'K') return value - 273.15;
+    return (value * 5) / 9 - 273.15;
+  }
+
+  function fromCelsius(c, unit) {
+    if (unit === 'C') return c;
+    if (unit === 'F') return (c * 9) / 5 + 32;
+    if (unit === 'K') return c + 273.15;
+    return ((c + 273.15) * 9) / 5;
+  }
+
+  function convertTemperature(value, from, to) {
+    validateNumber(value);
+    if (!(from in TEMP_UNITS) || !(to in TEMP_UNITS)) throw new Error('Satuan suhu tidak tersedia.');
+    const celsius = toCelsius(value, from);
+    if (celsius < ABS_ZERO_C - 1e-9) throw new Error('Suhu tidak boleh di bawah nol mutlak (0 K).');
+    return validateNumber(fromCelsius(Math.max(celsius, ABS_ZERO_C), to));
+  }
+
+  function convertDelta(value, from, to) {
+    validateNumber(value);
+    if (!(from in DELTA_PER_C) || !(to in DELTA_PER_C)) throw new Error('Satuan suhu tidak tersedia.');
+    return validateNumber((value * DELTA_PER_C[to]) / DELTA_PER_C[from]);
+  }
+
+  /* ---------- Penyusun langkah hitung (enam bagian) ---------- */
+  function step(title, lines) {
+    return { title, lines };
+  }
+
+  function convertSteps(cat, value, from, to) {
+    const result = convertLinear(cat, value, from, to);
+    const c = CATEGORIES[cat];
+    const A = c.units[from];
+    const B = c.units[to];
+    const base = c.base;
+    const x = value * A.f;
+    const ratio = A.f / B.f;
+    let check;
+    if (from === to) check = 'Satuan asal dan tujuan sama, jadi angkanya tidak berubah.';
+    else if (value === 0) check = 'Nol tetap nol di semua satuan.';
+    else {
+      const bigger = ratio > 1;
+      check = B.label + (bigger ? ' lebih kecil dari ' : ' lebih besar dari ') + A.label +
+        ', jadi angkanya harus ' + (bigger ? 'membesar' : 'mengecil') + ': ' +
+        fmt(Math.abs(value)) + ' → ' + fmt(Math.abs(result)) + ' ✓';
+    }
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', [
+          'Diketahui: ' + fmt(value) + ' ' + A.label + '.',
+          'Ditanya: nilainya dalam ' + B.label + '.',
+        ]),
+        step('Rumus', [
+          'hasil = nilai × faktor asal ÷ faktor tujuan',
+          'Faktor = "1 satuan ini sama dengan berapa ' + base + '?" Satuan ' + base + ' menjadi perantara.',
+        ]),
+        step('Substitusi faktor', [
+          'Faktor asal: 1 ' + A.label + ' = ' + fmt(A.f, 10) + ' ' + base,
+          'Faktor tujuan: 1 ' + B.label + ' = ' + fmt(B.f, 10) + ' ' + base,
+        ]),
+        step('Hitungan antara', [
+          'Langkah 1 (ke ' + base + '): ' + fmt(value) + ' ' + A.label + ' × ' + fmt(A.f, 10) + ' ' +
+            base + '/' + A.label + ' ' + eqv(x) + ' ' + base,
+          'Langkah 2 (ke ' + B.label + '): ' + fmt(x) + ' ' + base + ' ÷ ' + fmt(B.f, 10) + ' ' +
+            base + '/' + B.label + ' ' + eqv(result) + ' ' + B.label,
+        ]),
+        step('Hasil akhir', [fmt(value) + ' ' + A.label + ' ' + eqv(result) + ' ' + B.label]),
+        step('Cek masuk akal', [check]),
+      ],
+    };
+  }
+
+  const TEMP_TO_C = {
+    C: '°C = nilai',
+    F: '°C = (°F − 32) × 5/9',
+    K: '°C = K − 273,15',
+    R: '°C = °R × 5/9 − 273,15',
+  };
+  const TEMP_FROM_C = {
+    C: 'nilai = °C',
+    F: '°F = °C × 9/5 + 32',
+    K: 'K = °C + 273,15',
+    R: '°R = (°C + 273,15) × 9/5',
+  };
+
+  function waterRelation(c) {
+    if (Math.abs(c) < 1e-9) return 'tepat di titik beku air';
+    if (c < 0) return 'di bawah titik beku air';
+    if (Math.abs(c - 100) < 1e-9) return 'tepat di titik didih air';
+    if (c < 100) return 'di antara titik beku dan titik didih air';
+    return 'di atas titik didih air';
+  }
+
+  function temperatureSteps(value, from, to) {
+    const result = convertTemperature(value, from, to);
+    const A = TEMP_UNITS[from];
+    const B = TEMP_UNITS[to];
+    const v = fmt(value);
+    let c;
+    let line1;
+    if (from === 'C') {
+      c = value;
+      line1 = 'Langkah 1 (ke °C): sudah Celsius, °C = ' + v;
+    } else if (from === 'F') {
+      const a = value - 32;
+      c = (a * 5) / 9;
+      line1 = 'Langkah 1 (ke °C): °C = (' + v + ' − 32) × 5/9 = ' + fmt(a) + ' × 5/9 ' + eqv(c) + ' °C';
+    } else if (from === 'K') {
+      c = value - 273.15;
+      line1 = 'Langkah 1 (ke °C): °C = ' + v + ' − 273,15 ' + eqv(c) + ' °C';
+    } else {
+      const a = (value * 5) / 9;
+      c = a - 273.15;
+      line1 = 'Langkah 1 (ke °C): °C = ' + v + ' × 5/9 − 273,15 = ' + fmt(a) + ' − 273,15 ' + eqv(c) + ' °C';
+    }
+    const c2 = Math.max(c, ABS_ZERO_C);
+    const cs = fmt(c2);
+    let line2;
+    if (to === 'C') line2 = 'Langkah 2 (ke °C): hasil = ' + cs + ' °C';
+    else if (to === 'F') {
+      const a = (c2 * 9) / 5;
+      line2 = 'Langkah 2 (ke °F): °F = ' + cs + ' × 9/5 + 32 = ' + fmt(a) + ' + 32 ' + eqv(result) + ' °F';
+    } else if (to === 'K') line2 = 'Langkah 2 (ke K): K = ' + cs + ' + 273,15 ' + eqv(result) + ' K';
+    else {
+      const a = c2 + 273.15;
+      line2 = 'Langkah 2 (ke °R): °R = (' + cs + ' + 273,15) × 9/5 = ' + fmt(a) + ' × 9/5 ' + eqv(result) + ' °R';
+    }
+    const rel = waterRelation(c);
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + v + ' ' + A.label + '.', 'Ditanya: suhu dalam ' + B.label + '.']),
+        step('Rumus', [
+          'Titik nol tiap skala berbeda, jadi pakai perantara °C: kali dan geser titik nol.',
+          'Ke °C: ' + TEMP_TO_C[from],
+          'Dari °C: ' + TEMP_FROM_C[to],
+        ]),
+        step('Substitusi', ['Asal: ' + A.label + ' = ' + v, 'Tujuan: ' + B.label]),
+        step('Hitungan antara', [
+          line1,
+          'Cek batas: ' + fmt(c) + ' °C ≥ −273,15 °C (nol mutlak), jadi suhu ini mungkin.',
+          line2,
+        ]),
+        step('Hasil akhir', [v + ' ' + A.label + ' ' + eqv(result) + ' ' + B.label]),
+        step('Cek masuk akal', [
+          'Suhu ini ' + rel + '. Air membeku di ' + fmt(B.freeze) + ' ' + B.label + ' dan mendidih di ' +
+            fmt(B.boil) + ' ' + B.label + ', jadi hasil ' + fmt(result) + ' ' + B.label + ' ' + rel + ' ✓',
+        ]),
+      ],
+    };
+  }
+
+  function deltaSteps(value, from, to) {
+    const result = convertDelta(value, from, to);
+    const A = TEMP_UNITS[from];
+    const B = TEMP_UNITS[to];
+    const v = fmt(value);
+    const kind = value >= 0 ? 'kenaikan' : 'penurunan';
+    const point = convertTemperature(Math.abs(value), from, to);
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: perubahan suhu Δ = ' + v + ' ' + A.label + '.', 'Ditanya: perubahan itu dalam ' + B.label + '.']),
+        step('Rumus', [
+          'Δhasil = Δnilai × (derajat ' + B.label + ' per 1 °C) ÷ (derajat ' + A.label + ' per 1 °C)',
+          'Perubahan suhu hanya memakai ukuran derajat. Titik nol tidak ikut, jadi tanpa + 32 dan tanpa − 273,15.',
+        ]),
+        step('Substitusi', [
+          '1 °C = 1 K = 1,8 °F = 1,8 °R',
+          'Derajat ' + A.label + ' per 1 °C = ' + fmt(DELTA_PER_C[from]) + '; derajat ' + B.label + ' per 1 °C = ' + fmt(DELTA_PER_C[to]),
+        ]),
+        step('Hitungan antara', ['Δ ' + B.label + ' = ' + v + ' × ' + fmt(DELTA_PER_C[to]) + ' ÷ ' + fmt(DELTA_PER_C[from]) + ' ' + eqv(result)]),
+        step('Hasil akhir', [kind + ' ' + fmt(Math.abs(value)) + ' ' + A.label + ' sama dengan ' + kind + ' ' + fmt(Math.abs(result)) + ' ' + B.label]),
+        step('Cek masuk akal', [
+          'Tanda ikut: ' + kind + ' tetap ' + kind + '. Ini berbeda dari titik suhu: titik ' + fmt(Math.abs(value)) +
+            ' °C adalah ' + fmt(point) + ' °F, bukan ' + fmt(Math.abs(result)) + ' °F.',
+        ]),
+      ],
+    };
+  }
+
+  /* Luas dan volume: faktor panjang dipangkatkan 2 atau 3. */
+  function powerSteps(value, from, to, power) {
+    validateNumber(value);
+    const U = CATEGORIES.length.units;
+    if (!(from in U) || !(to in U) || (power !== 2 && power !== 3)) {
+      throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    }
+    const A = U[from];
+    const B = U[to];
+    const k = A.f / B.f;
+    const result = validateNumber(value * Math.pow(k, power));
+    const sup = power === 2 ? '²' : '³';
+    const what = power === 2 ? 'luas' : 'volume';
+    return {
+      result,
+      unit: B.label + sup,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + what + ' ' + fmt(value) + ' ' + A.label + sup + '.', 'Ditanya: ' + what + ' dalam ' + B.label + sup + '.']),
+        step('Rumus', [
+          'k = faktor panjang = 1 ' + A.label + ' dalam ' + B.label + ' = faktor asal ÷ faktor tujuan',
+          'hasil = nilai × k' + (power === 2 ? '²' : '³') + ' (faktor panjang dikalikan ' + (power === 2 ? 'dua kali' : 'tiga kali') + ')',
+        ]),
+        step('Substitusi', ['k = ' + fmt(A.f, 10) + ' m ÷ ' + fmt(B.f, 10) + ' m ' + eqv(k) + ' → 1 ' + A.label + ' = ' + fmt(k) + ' ' + B.label]),
+        step('Hitungan antara', [
+          'k' + sup + ' = ' + fmt(k) + sup + ' ' + eqv(Math.pow(k, power)),
+          'hasil = ' + fmt(value) + ' × ' + fmt(Math.pow(k, power)) + ' ' + eqv(result) + ' ' + B.label + sup,
+        ]),
+        step('Hasil akhir', [fmt(value) + ' ' + A.label + sup + ' ' + eqv(result) + ' ' + B.label + sup]),
+        step('Cek masuk akal', [
+          'Panjang dikali ' + fmt(k) + ', maka ' + what + ' dikali ' + fmt(Math.pow(k, power)) + ' (bukan ' + fmt(k) + ').',
+        ]),
+      ],
+    };
+  }
+
+  /* Tinggi gabungan kaki dan inci -> cm. */
+  function feetInchesSteps(feet, inches) {
+    validateNumber(feet);
+    validateNumber(inches);
+    const totalIn = feet * 12 + inches;
+    const base = convertSteps('length', totalIn, 'in', 'cm');
+    return {
+      result: base.result,
+      unit: 'cm',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + fmt(feet) + ' ft ' + fmt(inches) + ' in (dua komponen, bukan ' + fmt(feet) + ',' + fmt(inches) + ' ft).', 'Ditanya: tinggi dalam cm.']),
+        step('Rumus', ['inci total = kaki × 12 + inci', 'cm = inci total × 2,54 (1 in = 2,54 cm tepat)']),
+        step('Substitusi', ['inci total = ' + fmt(feet) + ' × 12 + ' + fmt(inches)]),
+        step('Hitungan antara', [
+          'inci total = ' + fmt(feet * 12) + ' + ' + fmt(inches) + ' = ' + fmt(totalIn) + ' in',
+          'cm = ' + fmt(totalIn) + ' × 0,0254 m/in ÷ 0,01 m/cm ' + eqv(base.result) + ' cm',
+        ]),
+        step('Hasil akhir', [fmt(feet) + ' ft ' + fmt(inches) + ' in ' + eqv(base.result) + ' cm']),
+        step('Cek masuk akal', ['1 ft ≈ 30 cm, jadi ' + fmt(feet) + ' ft ≈ ' + fmt(feet * 30) + ' cm, ditambah sedikit dari inci ✓']),
+      ],
+    };
+  }
+
+  /* Tekanan = gaya per luas. F dalam N, A dalam m². */
+  function pressureFromForce(F, A) {
+    validateNumber(F);
+    validateNumber(A);
+    if (A <= 0) throw new Error('Luas harus lebih besar dari nol.');
+    const result = validateNumber(F / A);
+    return {
+      result,
+      unit: 'Pa',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: F = ' + fmt(F) + ' N, A = ' + fmt(A) + ' m².', 'Ditanya: tekanan P.']),
+        step('Rumus', ['P = F ÷ A', '1 Pa = 1 N/m²']),
+        step('Substitusi', ['P = ' + fmt(F) + ' N ÷ ' + fmt(A) + ' m²']),
+        step('Hitungan antara', ['P ' + eqv(result) + ' N/m²']),
+        step('Hasil akhir', ['P ' + eqv(result) + ' Pa']),
+        step('Cek masuk akal', ['Luas ' + fmt(A) + ' m² ' + (A < 1 ? 'lebih kecil dari 1 m², jadi tekanan lebih besar dari gaya (dalam angka) ✓' : 'tidak lebih kecil dari 1 m², jadi tekanan tidak lebih besar dari gaya (dalam angka) ✓')]),
+      ],
+    };
+  }
+
+  /* Tekanan absolut = gauge + atmosfer, setelah satuan disamakan. */
+  function gaugeToAbsolute(gauge, gaugeUnit, atm, atmUnit, outUnit) {
+    validateNumber(gauge);
+    validateNumber(atm);
+    const U = CATEGORIES.pressure.units;
+    if (!(gaugeUnit in U) || !(atmUnit in U) || !(outUnit in U)) throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    const absPa = gauge * U[gaugeUnit].f + atm * U[atmUnit].f;
+    if (absPa < 0) throw new Error('Tekanan absolut tidak boleh negatif. Vakum penuh adalah 0 absolut.');
+    const g = (gauge * U[gaugeUnit].f) / U[outUnit].f;
+    const a = (atm * U[atmUnit].f) / U[outUnit].f;
+    const result = validateNumber(g + a);
+    const O = U[outUnit].label;
+    return {
+      result,
+      unit: O,
+      gaugeOut: g,
+      atmOut: a,
+      steps: [
+        step('Diketahui dan ditanya', [
+          'Diketahui: tekanan gauge = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ', tekanan atmosfer = ' + fmt(atm) + ' ' + U[atmUnit].label + '.',
+          'Ditanya: tekanan absolut dalam ' + O + '.',
+        ]),
+        step('Rumus', ['P absolut = P gauge + P atmosfer', 'Samakan satuan lebih dulu, baru dijumlahkan.']),
+        step('Substitusi', ['Gauge dalam ' + O + ' = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ' × ' + fmt(U[gaugeUnit].f, 10) + ' Pa ÷ ' + fmt(U[outUnit].f, 10) + ' Pa', 'Atmosfer dalam ' + O + ' = ' + fmt(atm) + ' ' + U[atmUnit].label + ' × ' + fmt(U[atmUnit].f, 10) + ' Pa ÷ ' + fmt(U[outUnit].f, 10) + ' Pa']),
+        step('Hitungan antara', ['Gauge ' + eqv(g) + ' ' + O, 'Atmosfer ' + eqv(a) + ' ' + O, 'P absolut = ' + fmt(g) + ' + ' + fmt(a) + ' ' + eqv(result) + ' ' + O]),
+        step('Hasil akhir', ['P absolut ' + eqv(result) + ' ' + O]),
+        step('Cek masuk akal', [gauge >= 0 ? 'Tekanan absolut harus lebih besar dari tekanan gauge karena atmosfer ditambahkan ✓' : 'Gauge negatif berarti di bawah tekanan udara luar (vakum parsial); absolut tetap tidak negatif ✓']),
+      ],
+    };
+  }
+
+  /* Hukum Newton II dan gaya berat. */
+  function newtonSteps(mass, accel) {
+    validateNumber(mass);
+    validateNumber(accel);
+    if (mass <= 0) throw new Error('Massa harus lebih besar dari nol.');
+    const result = validateNumber(mass * accel);
+    return {
+      result,
+      unit: 'N',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: m = ' + fmt(mass) + ' kg, a = ' + fmt(accel) + ' m/s².', 'Ditanya: gaya resultan F.']),
+        step('Rumus', ['F = m × a', '1 N = 1 kg·m/s²']),
+        step('Substitusi', ['F = ' + fmt(mass) + ' kg × ' + fmt(accel) + ' m/s²']),
+        step('Hitungan antara', ['F ' + eqv(result) + ' kg·m/s²']),
+        step('Hasil akhir', ['F ' + eqv(result) + ' N']),
+        step('Cek masuk akal', ['Massa dan percepatan sama-sama positif, jadi gaya positif; massa lebih besar atau percepatan lebih besar membuat gaya lebih besar ✓']),
+      ],
+    };
+  }
+
+  function accelerationSteps(force, mass) {
+    validateNumber(force);
+    validateNumber(mass);
+    if (mass <= 0) throw new Error('Massa harus lebih besar dari nol.');
+    const result = validateNumber(force / mass);
+    return {
+      result,
+      unit: 'm/s²',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: F = ' + fmt(force) + ' N, m = ' + fmt(mass) + ' kg.', 'Ditanya: percepatan a.']),
+        step('Rumus', ['a = F ÷ m (dari F = m × a)']),
+        step('Substitusi', ['a = ' + fmt(force) + ' N ÷ ' + fmt(mass) + ' kg']),
+        step('Hitungan antara', ['a ' + eqv(result) + ' m/s²']),
+        step('Hasil akhir', ['a ' + eqv(result) + ' m/s²']),
+        step('Cek masuk akal', ['Massa lebih besar membuat percepatan lebih kecil untuk gaya yang sama ✓']),
+      ],
+    };
+  }
+
+  function weightSteps(mass, g, where) {
+    validateNumber(mass);
+    validateNumber(g);
+    if (mass <= 0 || g <= 0) throw new Error('Massa dan percepatan gravitasi harus lebih besar dari nol.');
+    const result = validateNumber(mass * g);
+    const kgf = result / CATEGORIES.force.units.kgf.f;
+    return {
+      result,
+      unit: 'N',
+      kgf,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: m = ' + fmt(mass) + ' kg, g = ' + fmt(g) + ' m/s²' + (where ? ' (' + where + ')' : '') + '.', 'Ditanya: gaya berat W.']),
+        step('Rumus', ['W = m × g', 'g adalah percepatan gravitasi di lokasi itu; nilainya harus dinyatakan.']),
+        step('Substitusi', ['W = ' + fmt(mass) + ' kg × ' + fmt(g) + ' m/s²']),
+        step('Hitungan antara', ['W ' + eqv(result) + ' N', 'Dalam kgf: ' + fmt(result) + ' N ÷ 9,80665 N/kgf ' + eqv(kgf) + ' kgf']),
+        step('Hasil akhir', ['W ' + eqv(result) + ' N, sama dengan ' + fmt(kgf) + ' kgf']),
+        step('Cek masuk akal', ['Massa tetap ' + fmt(mass) + ' kg; hanya gaya beratnya yang mengikuti g ✓']),
+      ],
+    };
+  }
+
+  /* ---------- Pemeriksaan jawaban numerik ---------- */
+  function checkNumeric(user, expected, dp) {
+    const diff = Math.abs(user - expected);
+    const tol = dp === 'exact'
+      ? Math.max(1e-9, 1e-9 * Math.abs(expected))
+      : 0.5 * Math.pow(10, -dp) * (1 + 1e-9) + 1e-9 * Math.abs(expected);
+    return { ok: diff <= tol, diff };
+  }
+
+  function label(cat, unit) {
+    if (cat === 'temperature') return TEMP_UNITS[unit].label;
+    return CATEGORIES[cat].units[unit].label;
+  }
+
+  const api = {
+    CATEGORIES, TEMP_UNITS, DELTA_PER_C, ABS_ZERO_C,
+    fmt, isRounded, eqv, shown, parseNumber, validateNumber,
+    convertLinear, convertTemperature, convertDelta, toCelsius, fromCelsius,
+    convertSteps, temperatureSteps, deltaSteps, powerSteps, feetInchesSteps,
+    pressureFromForce, gaugeToAbsolute, newtonSteps, accelerationSteps, weightSteps,
+    checkNumeric, label, step,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  return api;
+})();
+</script>
+
 <script id="app">
 'use strict';
 
