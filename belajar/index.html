@@ -190,6 +190,17 @@ svg .ac { stroke: var(--accent); fill: none; stroke-width: 3; }
 svg .acf { fill: var(--accent); }
 svg .soft { fill: var(--soft); stroke: var(--line); }
 svg .tint { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+svg .danger { stroke: var(--bad); fill: none; stroke-width: 2.5; }
+pre.code {
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5; background: #1f2430; color: #eef0f5;
+  border-radius: 8px; padding: .8rem 1rem; overflow-x: auto; margin: .6rem 0;
+}
+.legend { margin: .3rem 0 .8rem; padding-left: 1.2rem; max-width: 70ch; }
+.legend li { margin: .15rem 0; }
+.example { margin: 1rem 0; }
+.example > h3 { margin-bottom: .2rem; }
+.example .problem { font-weight: 600; margin-bottom: .4rem; }
+.module-grid { display: grid; gap: 1rem; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -972,10 +983,10 @@ function Converter(cat, o) {
     label: 'Nilai', value: o.value === undefined ? 1 : o.value,
     hint: 'Contoh: 12 atau 1,5 (tanpa pemisah ribuan)', onChange: render,
   });
-  const from = unitSelect({ label: 'Dari', cat, value: o.from || defaults[0], onChange: render });
-  const to = unitSelect({ label: 'Ke', cat, value: o.to || defaults[1], onChange: render });
+  const from = unitSelect({ label: 'Dari', cat, value: o.from || defaults[0], advanced: o.advanced, onChange: render });
+  const to = unitSelect({ label: 'Ke', cat, value: o.to || defaults[1], advanced: o.advanced, onChange: render });
   const swap = h('button', { class: 'btn secondary', type: 'button' }, 'Tukar satuan');
-  const advBox = h('input', { type: 'checkbox', id: uid('adv') });
+  const advBox = h('input', { type: 'checkbox', id: uid('adv'), checked: !!o.advanced });
   const advLabel = Object.values(unitsOf(cat)).filter((u) => u.adv).map((u) => u.label).join(', ');
   const out = h('div', { 'aria-live': 'polite' });
   const hub = h('figure', { class: 'fig' });
@@ -1184,6 +1195,292 @@ PAGES.mulai = function (main) {
           ['suhu', 'Suhu', 'Titik nol berbeda, perubahan suhu, dan nol mutlak.'],
         ].map(([id, title, text]) => h('a', { class: 'card', href: '#' + id, 'data-topic': id }, h('h3', {}, title), h('p', {}, text))))));
 };
+
+/* ---------- Kerangka modul ---------- */
+const prefersReducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function arrowDefs(id) {
+  return s('defs', {}, s('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, s('path', { d: 'M0 0L10 5L0 10z', class: 'acf' })));
+}
+
+function unitTable(cat, uses, includeAdvanced) {
+  const c = Core.CATEGORIES[cat];
+  const rows = Object.keys(c.units).filter((k) => includeAdvanced === !!c.units[k].adv).map((k) => {
+    const u = c.units[k];
+    return h('tr', {}, h('td', {}, h('strong', {}, u.label)), h('td', {}, u.name), h('td', { class: 'num' }, '1 ' + u.label + ' = ' + Core.fmt(u.f, 10) + ' ' + c.base), h('td', {}, uses[k] || ''));
+  });
+  return h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+    h('thead', {}, h('tr', {}, h('th', {}, 'Simbol'), h('th', {}, 'Nama'), h('th', {}, 'Faktor ke ' + c.base), h('th', {}, 'Dipakai untuk'))),
+    h('tbody', {}, rows)));
+}
+
+function exampleCard(ex) {
+  return h('div', { class: 'card example' },
+    h('h3', {}, ex.title),
+    h('p', { class: 'problem' }, ex.problem),
+    stepper(ex.solution),
+    ex.note ? h('p', { class: 'hint' }, ex.note) : null);
+}
+
+function pitfallBox(title, text) {
+  return h('div', { class: 'pitfall' }, h('strong', {}, title + ' '), text);
+}
+
+function pythonSection(def) {
+  return h('details', {},
+    h('summary', {}, 'Kaitkan dengan Python'),
+    h('p', {}, def.python.text),
+    h('pre', { class: 'code' }, def.python.code),
+    h('p', { class: 'hint' }, 'Sumber: ' + def.python.file + ' di repository ini.'));
+}
+
+function renderModule(main, def) {
+  document.body.dataset.topic = def.id;
+  const sections = [];
+  const add = (key, title, ...kids) => {
+    const sec = section(title, kids);
+    sec.dataset.key = key;
+    sections.push({ title, sec });
+    return sec;
+  };
+  const toc = h('div', { class: 'toc', role: 'group', 'aria-label': 'Loncat ke bagian' });
+  const body = h('div', { class: 'module-grid' });
+  add('pahami', 'Pahami', ...def.understand());
+  def.visuals.forEach((v, i) => add('visual' + i, v.title, h('p', {}, v.text), v.build()));
+  add('satuan', 'Kenali satuan', ...def.unitsContent());
+  add('contoh', 'Ikuti contoh', h('p', {}, 'Buka satu langkah demi satu langkah. Tiap contoh memakai urutan yang sama: diketahui, rumus, substitusi, hitungan antara, hasil, lalu cek masuk akal.'), def.examples.map(exampleCard));
+  add('hitung', 'Hitung sendiri', h('p', {}, 'Masukkan nilai dan pilih satuan. Semua langkah hitung ikut berubah.'), Converter(def.cat, def.converter));
+  add('jebakan', 'Jebakan umum', ...def.pitfalls.map((p) => pitfallBox(p[0], p[1])));
+  if (def.quiz) add('kuis', 'Uji pemahaman', def.quiz());
+  add('lanjutan', 'Lanjutan', ...def.advanced());
+  for (const { title, sec } of sections) {
+    toc.append(h('button', { type: 'button', onclick() {
+      sec.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    } }, title));
+    body.append(sec);
+  }
+  main.append(
+    h('div', { class: 'page-head' }, h('div', { class: 'kicker' }, def.kicker), h('h1', {}, def.title), h('p', { class: 'lead' }, def.lead), toc),
+    body);
+}
+
+/* ---------- Modul Tekanan ---------- */
+function pressureForceVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const stepsBox = h('div');
+  const F = sliderField({ label: 'Gaya F', unit: 'N', min: 0, max: 2000, step: 10, value: 500, fieldMin: 0, minMsg: 'Gaya tidak boleh negatif di simulasi ini.', onChange: update });
+  const A = sliderField({ label: 'Luas kontak A', unit: 'm²', min: 0.05, max: 2, step: 0.05, value: 0.25, positive: true, onChange: update });
+  const preset = (f, a) => { F.setValue(f); A.setValue(a); update(); };
+  function draw(f, a, p) {
+    const svg = s('svg', { viewBox: '0 0 460 300', role: 'img', 'aria-label': 'Balok menekan lantai dengan gaya ' + Core.fmt(f) + ' N pada luas ' + Core.fmt(a) + ' meter persegi. Tekanannya ' + Core.fmt(p) + ' Pa.' });
+    svg.append(s('title', {}, 'Gaya, luas, dan tekanan'), arrowDefs('pfArrow'));
+    const w = 40 + 300 * Math.min(a / 2, 1);
+    const cx = 230;
+    const x = cx - w / 2;
+    const L = f <= 0 ? 0 : 30 + 105 * Math.min(f / 2000, 1);
+    svg.append(
+      s('rect', { x: 10, y: 230, width: 440, height: 64, class: 'soft' }),
+      s('rect', { x, y: 160, width: w, height: 70, class: 'tint' }),
+      s('text', { x: cx, y: 200, 'text-anchor': 'middle', class: 'tm' }, 'A = ' + Core.fmt(a, 4) + ' m²'));
+    if (L > 0) {
+      svg.append(
+        s('line', { x1: cx, y1: 155 - L, x2: cx, y2: 156, class: 'ac', 'marker-end': 'url(#pfArrow)', 'stroke-width': 5 }),
+        s('text', { x: cx + 14, y: 155 - L + 16, class: 'tb' }, 'F = ' + Core.fmt(f, 4) + ' N'));
+    } else {
+      svg.append(s('text', { x: cx + 14, y: 100, class: 'tb' }, 'F = 0 N'));
+    }
+    const lp = 8 + 32 * Math.min(Math.log10(1 + p) / Math.log10(1 + 40000), 1);
+    const n = 9;
+    for (let i = 0; i < n; i += 1) {
+      const xi = x + ((i + 0.5) * w) / n;
+      svg.append(s('line', { x1: xi, y1: 236, x2: xi, y2: 236 + lp, class: 'ac', 'marker-end': 'url(#pfArrow)', 'stroke-width': 2 }));
+    }
+    svg.append(s('text', { x: cx, y: 290, 'text-anchor': 'middle', class: 'tm' }, 'P = ' + Core.fmt(p, 6) + ' Pa'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Panah besar: gaya. Panah kecil di bawah balok: tekanan pada lantai (makin panjang, makin besar; skala logaritmik).'));
+  }
+  function update() {
+    const f = F.read();
+    const a = A.read();
+    if (!f.ok || !a.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.pressureFromForce(f.value, a.value);
+      draw(f.value, a.value, sol.result);
+      const kPa = Core.convertLinear('pressure', sol.result, 'Pa', 'kPa');
+      const bar = Core.convertLinear('pressure', sol.result, 'Pa', 'bar');
+      out.replaceChildren(h('div', { class: 'result' }, 'P ', Core.eqv(sol.result), ' Pa ', Core.eqv(kPa), ' kPa ', Core.eqv(bar), ' bar'));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' },
+      F.el, A.el,
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn secondary', type: 'button', onclick() { preset(500, 0.5); } }, 'Gaya sama, luas besar (0,5 m²)'),
+        h('button', { class: 'btn secondary', type: 'button', onclick() { preset(500, 0.1); } }, 'Gaya sama, luas kecil (0,1 m²)')),
+      out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+function pressureGaugeVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const stepsBox = h('div');
+  const G = numberField({ label: 'Tekanan gauge', value: 32, hint: 'Boleh negatif (vakum parsial)', onChange: update });
+  const Gu = unitSelect({ label: 'Satuan gauge', cat: 'pressure', value: 'psi', onChange: update });
+  const At = numberField({ label: 'Tekanan atmosfer di lokasi', value: 1, positive: true, onChange: update });
+  const Au = unitSelect({ label: 'Satuan atmosfer', cat: 'pressure', value: 'atm', onChange: update });
+  const Ou = unitSelect({ label: 'Hasil dalam', cat: 'pressure', value: 'bar', onChange: update });
+  function draw(sol) {
+    const x0 = 20;
+    const x1 = 440;
+    const label = sol.unit;
+    const total = sol.result;
+    const maxV = Math.max(total, sol.atmOut) * 1.12 || 1;
+    const sc = (x1 - x0) / maxV;
+    const neg = sol.gaugeOut < 0;
+    const svg = s('svg', { viewBox: '0 0 460 230', role: 'img', 'aria-label': 'Batang tekanan: atmosfer ' + Core.fmt(sol.atmOut, 5) + ' ' + label + (neg ? ', gauge negatif ' : ' ditambah gauge ') + Core.fmt(sol.gaugeOut, 5) + ' ' + label + ', absolut ' + Core.fmt(total, 5) + ' ' + label + '.' });
+    svg.append(
+      s('title', {}, 'Tekanan atmosfer, gauge, dan absolut'),
+      s('defs', {}, s('pattern', { id: 'hatch', width: 8, height: 8, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, s('line', { x1: 0, y1: 0, x2: 0, y2: 8, stroke: '#a3221f', 'stroke-width': 2 }))));
+    const atmW = sol.atmOut * sc;
+    svg.append(s('rect', { x: x0, y: 70, width: atmW, height: 44, class: 'soft' }));
+    if (atmW >= 90) svg.append(s('text', { x: x0 + atmW / 2, y: 97, 'text-anchor': 'middle', class: 't' }, 'atmosfer ' + Core.fmt(sol.atmOut, 4)));
+    if (!neg) {
+      const gW = sol.gaugeOut * sc;
+      svg.append(s('rect', { x: x0 + atmW, y: 70, width: gW, height: 44, class: 'tint' }));
+      if (gW >= 90) svg.append(s('text', { x: x0 + atmW + gW / 2, y: 97, 'text-anchor': 'middle', class: 'tb' }, 'gauge ' + Core.fmt(sol.gaugeOut, 4)));
+    } else {
+      svg.append(s('rect', { x: x0 + total * sc, y: 70, width: -sol.gaugeOut * sc, height: 44, fill: 'url(#hatch)', stroke: '#a3221f' }));
+    }
+    const xe = x0 + total * sc;
+    svg.append(
+      s('line', { x1: x0, y1: 56, x2: xe, y2: 56, class: 'ac' }),
+      s('line', { x1: x0, y1: 50, x2: x0, y2: 62, class: 'ac' }),
+      s('line', { x1: xe, y1: 50, x2: xe, y2: 62, class: 'ac' }),
+      s('text', { x: x0, y: 40, class: 'tb' }, 'P absolut = ' + Core.fmt(total, 6) + ' ' + label),
+      s('line', { x1: x0, y1: 134, x2: x1, y2: 134, class: 'ln' }));
+    const step = niceStep(maxV, 6);
+    for (let t = 0; t <= maxV + 1e-9; t += step) {
+      const x = x0 + t * sc;
+      svg.append(s('line', { x1: x, y1: 134, x2: x, y2: 142, class: 'ln' }), s('text', { x, y: 158, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(t, 4)));
+    }
+    svg.append(
+      s('text', { x: x0, y: 176, class: 'ts' }, '0 = vakum penuh (tidak ada udara sama sekali)'),
+      s('rect', { x: x0, y: 190, width: 14, height: 14, class: 'soft' }),
+      s('text', { x: x0 + 20, y: 202, class: 'ts' }, 'tekanan atmosfer'),
+      s('rect', { x: x0 + 150, y: 190, width: 14, height: 14, class: neg ? '' : 'tint', fill: neg ? 'url(#hatch)' : undefined, stroke: neg ? '#a3221f' : undefined }),
+      s('text', { x: x0 + 170, y: 202, class: 'ts' }, neg ? 'gauge negatif (vakum parsial)' : 'tekanan gauge (kelebihan di atas atmosfer)'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Skala dalam ' + label + '. Absolut = atmosfer + gauge; gauge negatif berarti di bawah tekanan udara luar.'));
+  }
+  function update() {
+    const g = G.read();
+    const a = At.read();
+    if (!g.ok || !a.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.gaugeToAbsolute(g.value, Gu.value, a.value, Au.value, Ou.value);
+      draw(sol);
+      out.replaceChildren(h('div', { class: 'result' }, 'P absolut ', Core.eqv(sol.result), ' ', sol.unit));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' },
+      h('div', { class: 'row' }, G.el, Gu.el),
+      h('div', { class: 'row' }, At.el, Au.el),
+      h('div', { class: 'row' }, Ou.el),
+      out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+const PRESSURE_USES = {
+  Pa: 'Satuan SI; dasar rumus fisika. Sangat kecil.',
+  kPa: 'Teknik umum, cuaca, ventilasi.',
+  MPa: 'Kekuatan material dan hidrolik tekanan tinggi.',
+  bar: 'Industri dan mesin; dekat dengan 1 atm.',
+  mbar: 'Cuaca dan vakum; 1 mbar = 100 Pa.',
+  atm: 'Tekanan udara rata-rata di permukaan laut (standar).',
+  psi: 'Ban dan kompresor; lbf per inci persegi.',
+  Torr: 'Vakum; 760 Torr = 1 atm persis.',
+};
+
+const MODULES = {};
+
+MODULES.tekanan = {
+  id: 'tekanan', cat: 'pressure', kicker: 'Modul 1', title: 'Tekanan',
+  lead: 'Gaya yang sama bisa terasa ringan atau tajam, tergantung luas yang menerimanya. Tekanan adalah ukuran itu.',
+  converter: { value: 2, from: 'atm', to: 'psi' },
+  understand: () => [
+    h('p', {}, 'Tekanan adalah seberapa terpusat sebuah gaya pada suatu luas. Sepatu hak tinggi menancap di tanah lunak, sepatu datar tidak: beratmu sama, luas kontaknya berbeda. Pisau tajam memotong karena luas ujungnya sangat kecil.'),
+    h('div', { class: 'formula-box' }, 'P = F ÷ A'),
+    h('ul', { class: 'legend' },
+      h('li', {}, h('strong', {}, 'P'), ' tekanan, dalam pascal (Pa).'),
+      h('li', {}, h('strong', {}, 'F'), ' gaya yang tegak lurus bidang, dalam newton (N).'),
+      h('li', {}, h('strong', {}, 'A'), ' luas bidang yang menerima gaya, dalam meter persegi (m²).'),
+      h('li', {}, '1 Pa = 1 N/m². Angkanya kecil sekali, itu sebabnya ada kPa, MPa, bar, dan satuan lain.')),
+    h('p', {}, 'Luas diperkecil, tekanan naik. Luas diperbesar, tekanan turun. Itulah ide yang kamu coba di visual berikut.'),
+  ],
+  visuals: [
+    { title: 'Coba: gaya dan luas', text: 'Geser gaya dan luas kontak. Tekan dua tombol di bawahnya untuk membandingkan gaya yang sama pada luas berbeda.', build: pressureForceVisual },
+    { title: 'Coba: gauge dan absolut', text: 'Alat ukur biasa membaca selisih terhadap udara luar (gauge). Rumus fisika sering butuh tekanan absolut, yang diukur dari vakum penuh. Absolut = gauge + atmosfer, dengan satuan yang sama.', build: pressureGaugeVisual },
+  ],
+  unitsContent: () => [
+    h('p', {}, 'Semua satuan tekanan hanyalah kelipatan Pa dengan asal-usul berbeda. Faktor di tabel menjawab: 1 satuan ini sama dengan berapa Pa?'),
+    unitTable('pressure', PRESSURE_USES, false),
+    pitfallBox('1 atm dan 1 bar dekat, tetapi tidak sama.', '1 atm = 101.325 Pa dan 1 bar = 100.000 Pa, jadi 1 atm = 1,01325 bar (selisih sekitar 1,3%). Atmosfer standar adalah nilai acuan; tekanan udara di tempatmu bisa berbeda.'),
+    h('p', {}, 'Angka psi bisa diturunkan sendiri karena psi adalah lbf per inci persegi. Kuadratkan konversi inci ke meter, karena yang dikonversi adalah luas.'),
+    exampleCard({
+      title: 'Asal angka psi', problem: '1 lbf (4,4482216 N) menekan bidang 1 in² (0,0254 m × 0,0254 m). Berapa Pa?',
+      solution: () => Core.pressureFromForce(4.4482216152605, 0.0254 * 0.0254),
+      note: 'Hasilnya 6.894,757 Pa, persis faktor psi di tabel. Panjang dikuadratkan karena luas = panjang × panjang.',
+    }),
+    h('p', {}, 'Satuan lain yang sering muncul: mmHg (milimeter raksa) dipakai untuk tekanan darah, 1 mmHg ≈ 133,322 Pa. Torr nilainya hampir sama dengan mmHg, tetapi definisinya berbeda.'),
+  ],
+  examples: [
+    { title: 'Contoh 1: dari gaya dan luas', problem: 'Balok menekan lantai dengan gaya 500 N pada luas 0,25 m². Berapa tekanannya?', solution: () => Core.pressureFromForce(500, 0.25) },
+    { title: 'Contoh 2: kPa ke bar', problem: 'Ubah 250 kPa ke bar.', solution: () => Core.convertSteps('pressure', 250, 'kPa', 'bar') },
+    { title: 'Contoh 3: atm ke psi', problem: 'Ubah 2 atm ke psi.', solution: () => Core.convertSteps('pressure', 2, 'atm', 'psi') },
+    { title: 'Contoh 4: gauge ke absolut', problem: 'Ban menunjukkan 32 psi (gauge). Tekanan atmosfer 1 atm. Berapa tekanan absolutnya dalam bar?', solution: () => Core.gaugeToAbsolute(32, 'psi', 1, 'atm', 'bar'), note: 'Perhatikan 1 atm = 1,01325 bar. Samakan satuan lebih dulu, baru jumlahkan.' },
+  ],
+  pitfalls: [
+    ['Gauge bukan absolut.', 'Bacaan ban 32 psi adalah gauge. Tekanan di dalamnya sekitar 46,7 psi absolut karena atmosfer ikut ditambahkan.'],
+    ['Samakan satuan sebelum menjumlahkan.', 'Jangan menambah 32 psi dengan 1 atm. Ubah salah satunya dulu, misalnya keduanya ke bar.'],
+    ['Faktor luas dikuadratkan.', '1 in² bukan 0,0254 m². Luasnya (0,0254 m)² = 0,00064516 m².'],
+  ],
+  advanced: () => [
+    h('p', {}, 'Dua satuan tambahan ada di konverter Python repository ini: mbar dan Torr.'),
+    unitTable('pressure', PRESSURE_USES, true),
+    Converter('pressure', { value: 760, from: 'Torr', to: 'atm', advanced: true }),
+    pythonSection({
+      python: {
+        text: 'Tabel faktor di atas adalah dictionary FACTORS. Fungsi konversi hanya menjalankan dua langkah: kali faktor asal, bagi faktor tujuan.',
+        file: 'converters/pressure.py dan converters/base.py',
+        code: 'FACTORS = {\n    "Pa": 1,\n    "kPa": 1_000,\n    "MPa": 1_000_000,\n    "bar": 100_000,\n    "mbar": 100,\n    "atm": 101_325,\n    "psi": 6_894.757293168,\n    "Torr": 101_325 / 760,\n}\n\ndef convert_pressure(value, from_unit, to_unit):\n    return convert_linear(value, from_unit, to_unit, FACTORS)\n\n# converters/base.py\nresult = value * factors[from_unit] / factors[to_unit]',
+      },
+    }),
+    h('p', { class: 'hint' }, 'Konversi gauge ke absolut belum ada di aplikasi Streamlit. Visual di halaman ini hanya untuk belajar.'),
+  ],
+};
+
+PAGES.tekanan = (main) => renderModule(main, MODULES.tekanan);
 
 function buildNav() {
   const nav = document.getElementById('nav');
