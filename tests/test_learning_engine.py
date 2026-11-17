@@ -33,6 +33,7 @@ const run = (c) => {
     case 'tempsteps': return C.temperatureSteps(c.value, c.from, c.to).result;
     case 'delta': return C.convertDelta(c.value, c.from, c.to);
     case 'deltasteps': return C.deltaSteps(c.value, c.from, c.to).result;
+    case 'delta_details': return C.deltaSteps(c.value, c.from, c.to);
     case 'power': return C.powerSteps(c.value, c.from, c.to, c.power).result;
     case 'feetinches': return C.feetInchesSteps(c.feet, c.inches).result;
     case 'gauge': return C.gaugeToAbsolute(c.gauge, c.gu, c.atm, c.au, c.out).result;
@@ -218,3 +219,50 @@ def test_page_has_no_network_dependencies():
     html = HTML.read_text(encoding="utf-8")
     assert not re.search(r"""(?:src|href)\s*=\s*["']https?:""", html)
     assert not re.search(r"@import|fetch\(|XMLHttpRequest|WebSocket|sendBeacon", html)
+
+
+def test_delta_explanation_uses_the_selected_units():
+    solution = run_js([{"op": "delta_details", "value": -18, "from": "F", "to": "K"}])[
+        0
+    ]["value"]
+    assert solution["result"] == pytest.approx(-10)
+    explanation = " ".join(solution["steps"][-1]["lines"])
+    assert "°F dan K" in explanation
+    assert "penurunan tetap penurunan" in explanation
+    assert "titik 18 °C" not in explanation
+
+
+def test_quiz_records_revealed_answers_as_assisted():
+    driver = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const storeCode = html.slice(html.indexOf('const Store = (function'),
+    html.indexOf('/* ---------- Kuis satu per satu'));
+const memory = {};
+const window = {localStorage: {getItem: k => memory[k] || null,
+    setItem: (k, v) => { memory[k] = v; }}};
+const S = new Function('window', storeCode + ';return Store;')(window);
+S.markRevealed('revealed');
+S.recordCheck('revealed', true);
+S.recordCheck('direct', true);
+S.recordCheck('retry', false);
+S.recordCheck('retry', true);
+S.markHint('hinted');
+S.recordCheck('hinted', true);
+S.markLesson('suhu');
+const result = {revealed: S.get('revealed'), direct: S.get('direct'),
+    retry: S.get('retry'), hinted: S.get('hinted'), lesson: S.lessonDone('suhu')};
+S.reset(); result.reset = S.get('direct') === null && !S.lessonDone('suhu');
+console.log(JSON.stringify(result));
+"""
+    done = subprocess.run(
+        [NODE, "-e", driver, str(HTML)], capture_output=True, text=True, check=True
+    )
+    got = json.loads(done.stdout)
+    assert got["revealed"]["assisted"] is True
+    assert got["direct"]["assisted"] is False
+    assert got["retry"]["first"] == "salah"
+    assert got["retry"]["solved"] is True
+    assert got["hinted"]["assisted"] is True
+    assert got["lesson"] is True
+    assert got["reset"] is True

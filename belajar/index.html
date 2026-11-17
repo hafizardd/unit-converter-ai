@@ -560,7 +560,6 @@ const Core = (function () {
     const B = TEMP_UNITS[to];
     const v = fmt(value);
     const kind = value >= 0 ? 'kenaikan' : 'penurunan';
-    const point = convertTemperature(Math.abs(value), from, to);
     return {
       result,
       unit: B.label,
@@ -577,8 +576,8 @@ const Core = (function () {
         step('Hitungan antara', ['Δ ' + B.label + ' = ' + v + ' × ' + fmt(DELTA_PER_C[to]) + ' ÷ ' + fmt(DELTA_PER_C[from]) + ' ' + eqv(result)]),
         step('Hasil akhir', [kind + ' ' + fmt(Math.abs(value)) + ' ' + A.label + ' sama dengan ' + kind + ' ' + fmt(Math.abs(result)) + ' ' + B.label]),
         step('Cek masuk akal', [
-          'Tanda ikut: ' + kind + ' tetap ' + kind + '. Ini berbeda dari titik suhu: titik ' + fmt(Math.abs(value)) +
-            ' °C adalah ' + fmt(point) + ' °F, bukan ' + fmt(Math.abs(result)) + ' °F.',
+          'Tanda ikut: ' + kind + ' tetap ' + kind + '. Yang dibandingkan adalah selisih dalam ' + A.label +
+            ' dan ' + B.label + ', bukan titik suhunya. Tidak ada penambahan offset.',
         ]),
       ],
     };
@@ -1391,7 +1390,7 @@ const Store = (function () {
       const r = rec(id);
       if (r.first === undefined) {
         r.first = ok ? 'benar' : 'salah';
-        r.assisted = !!r.hint;
+        r.assisted = !!(r.hint || r.revealed);
       }
       r.tries += 1;
       if (ok) r.solved = true;
@@ -1499,7 +1498,7 @@ function Quiz(all, opts) {
         } else {
           const trap = q.traps.find((t) => Core.checkNumeric(p.value, t.value, t.dp === undefined ? q.dp : t.dp).ok);
           const generic = p.value > sol.result ? 'Hasilmu lebih besar dari yang seharusnya.' : 'Hasilmu lebih kecil dari yang seharusnya.';
-          setFb('bad', trap ? trap.msg : 'Belum tepat. ' + generic + ' Periksa arah (satuan tujuan lebih besar atau lebih kecil) dan urutan: kali faktor asal, lalu bagi faktor tujuan. Buka petunjuk bila perlu.');
+          setFb('bad', trap ? trap.msg : 'Belum tepat. ' + generic + ' Periksa rumus, satuan, dan urutan operasi. Petunjuk: ' + q.hint);
         }
       }
       refresh();
