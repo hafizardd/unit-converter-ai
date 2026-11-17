@@ -53,12 +53,17 @@ Mulai ulang aplikasi setelah mengubah `.env`.
 9. [Latihan dan petunjuk jawaban](docs/09-latihan-mandiri.md)
 10. [Sumber resmi](docs/10-sumber.md)
 
-## Rencana media belajar interaktif
+## Belajar interaktif tanpa instalasi
 
-[Rencana modul HTML interaktif](docs/11-rencana-belajar-interaktif.md) memuat
-tekanan, gaya, panjang, dan suhu: visualisasi, contoh dengan langkah rumus,
-konverter, serta kuis satu per satu. Dokumen ini masih tahap rencana untuk
-ditinjau; file HTML belum dibuat.
+Buka [belajar/index.html](belajar/index.html) dari folder hasil unduhan atau clone
+repository menggunakan browser. Jika membuka tautan ini di GitHub, unduh file HTML
+dahulu, lalu buka file yang diunduh. Seluruh fitur berjalan offline tanpa Python
+atau API key.
+
+Empat modul tekanan, gaya, panjang, dan suhu menyediakan visual yang dapat diubah,
+23 contoh dengan langkah rumus, konverter, dan 52 soal kuis satu per satu. Progres
+disimpan lokal pada browser. Lihat [panduan penggunaan](belajar/README.md) dan
+[rencana serta kriteria penerimaan](docs/11-rencana-belajar-interaktif.md).
 
 ## Tambahan dari versi workshop
 
@@ -68,10 +73,14 @@ calling; hasil Python ditampilkan tersendiri. Penjelasan dan argumen pilihan AI 
 perlu diperiksa. Tanpa hasil tool, angka pada teks AI belum terverifikasi.
 
 Contoh: **1 Pa = 0.00001 bar**, **-40 C = -40 F**, **1 kgf = 9.80665 N**.
-kg adalah massa; kgf gaya; `um` mikrometer; `R` Rankine. Gauge ↔ absolute dan
-konversi lintas dimensi tidak tersedia.
+kg adalah massa; kgf gaya; `um` mikrometer; `R` Rankine. Pada aplikasi Streamlit,
+gauge ↔ absolute dan konversi lintas dimensi tidak tersedia. HTML belajar memiliki
+simulasi gauge–absolut, gaya berat, serta luas/volume untuk menjelaskan konsepnya.
 
 ## Pemeriksaan
+
+Selain Python, siapkan Node.js 24 untuk menguji JavaScript HTML terhadap konverter
+Python. Node hanya diperlukan untuk pengembangan, bukan untuk membuka HTML.
 
 ```text
 python -m pip install -r requirements-dev.txt
@@ -81,5 +90,14 @@ python scripts/check.py
 Menjalankan format, lint, dan pytest, termasuk simulasi UI. Tidak memanggil API
 atau membutuhkan key. CI memakai Ubuntu dan Python 3.11–3.13; rehearsal API nyata
 tetap terpisah. Lihat [CONTRIBUTING](CONTRIBUTING.md) untuk GitHub Flow.
+
+Pemeriksaan interaksi HTML dengan Edge/Chromium terpasang:
+
+```text
+python scripts/check_learning_browser.py
+```
+
+Jika browser tidak ditemukan, gunakan `--browser PATH`. Pemeriksaan ini membuka
+file lokal dalam browser headless pada lebar 360, 768, dan 1280 piksel, tanpa server.
 
 Lisensi [MIT](LICENSE).

@@ -1,8 +1,10 @@
 # 11. Rencana modul belajar konversi interaktif
 
-Status: **rencana untuk ditinjau; HTML belum dibuat**. Tahap ini hanya memasukkan
-dokumen rencana ke GitHub melalui commit, push, pull request, dan merge. Implementasi
-HTML dimulai setelah pemilik proyek meninjau dan menyetujui rencana ini.
+Status: **rencana disetujui; implementasi tersedia** pada
+[`belajar/index.html`](../belajar/index.html). Pemilik proyek menyetujui implementasi
+setelah dokumen rencana di-merge melalui PR #5. Dokumen ini mempertahankan rancangan
+dan kriteria penerimaan sebagai acuan; panduan penggunaan ada di
+[`belajar/README.md`](../belajar/README.md).
 
 ## 1. Tujuan dan hasil akhir
 
@@ -392,6 +394,8 @@ Pemeriksaan implementasi juga mencakup:
 7. Tunggu CI dan review yang diwajibkan, lalu merge tanpa melewati aturan repository.
 8. Sinkronkan `main` lokal dan laporkan tautan PR, commit merge, serta pemeriksaan.
 
-**Titik tinjau berikutnya:** pemilik proyek meninjau format HTML offline, cakupan
-empat modul dan pelengkap, pola langkah hitung, serta rancangan kuis di atas.
-Merge dokumen ini menyimpan rencana; implementasi HTML tetap menunggu tinjauan itu.
+**Catatan pelaksanaan:** tahap dokumen rencana di atas telah selesai. Implementasi
+yang disetujui menyediakan empat modul, 23 contoh terbahas, dan 52 soal. Pekerjaan
+dibagi menjadi commit kecil berdasarkan fondasi, mesin hitung, modul, kuis, perbaikan,
+pengujian, dan dokumentasi. Gunakan kriteria penerimaan di bagian 15 untuk memeriksa
+perubahan berikutnya.
