@@ -838,8 +838,48 @@ const QUIZ = (function () {
       ]),
   ];
 
-  return sets;
-})();
+  sets.gaya = [
+    mc('gaya-1', 'gaya', 'konsep', 'Massa sebuah benda tetap. Gaya resultan yang bekerja padanya dijadikan dua kali lipat. Percepatannya...',
+      ['Menjadi dua kali lipat', 'Menjadi setengahnya', 'Tetap', 'Menjadi empat kali lipat'], 0,
+      'Dari F = m × a, a = F ÷ m. Apa yang terjadi bila F dilipatduakan dan m tetap?',
+      'a = F ÷ m. Dengan m tetap, a sebanding dengan F, jadi gaya dua kali lipat membuat percepatan dua kali lipat.',
+      { 1: 'Itu terjadi bila massanya yang dilipatduakan, bukan gayanya.' }),
+    mc('gaya-2', 'gaya', 'konsep', 'Gaya resultan yang sama bekerja pada benda bermassa 2 kali lebih besar. Percepatannya...',
+      ['Dua kali lipat', 'Setengahnya', 'Tetap', 'Nol'], 1,
+      'a = F ÷ m. Massa di penyebut.',
+      'a = F ÷ m. Massa lebih besar berarti benda lebih sulit dipercepat, sehingga percepatannya menjadi setengahnya.',
+      { 0: 'Terbalik. Benda yang lebih berat lebih sulit dipercepat oleh gaya yang sama.' }),
+    mc('gaya-3', 'gaya', 'prediksi', 'Kamu akan mengubah 10 kN ke lbf. Tanpa menghitung, angkanya akan...',
+      ['Membesar, karena 1 lbf jauh lebih kecil dari 1 kN', 'Mengecil, karena 1 lbf jauh lebih kecil dari 1 kN', 'Tetap sama'], 0,
+      '1 kN = 1.000 N dan 1 lbf = 4,448 N. Mana yang lebih kecil?',
+      'lbf adalah satuan yang jauh lebih kecil, jadi angkanya membesar: 10 kN menjadi sekitar 2.248 lbf.',
+      { 1: 'Terbalik. Satuan tujuan lebih kecil berarti angkanya lebih besar.' }),
+    calc('gaya-4', 'gaya', 'hitungan', 'Benda bermassa 2 kg mengalami percepatan 3 m/s². Berapa gaya resultannya?', 'N', 'exact',
+      () => Core.newtonSteps(2, 3), 'F = m × a.',
+      [{ value: 1.5, msg: 'Itu 3 ÷ 2. Rumusnya F = m × a, jadi massa dikali percepatan.' }]),
+    conv('gaya-5', 'gaya', 'hitungan', 'force', 5, 'kgf', 'N', 2, 'Tujuannya sudah newton: kali faktor kgf (9,80665).'),
+    conv('gaya-6', 'gaya', 'hitungan', 'force', 2, 'kN', 'kgf', 1, 'Ke N dulu (× 1.000), lalu ke kgf (÷ 9,80665).'),
+    conv('gaya-7', 'gaya', 'hitungan', 'force', 500, 'lbf', 'kN', 3, 'Ke N dulu (× 4,4482216), lalu ke kN (÷ 1.000).'),
+    mc('gaya-8', 'gaya', 'jebakan', 'Temanmu berkata "1 kg sama dengan 9,8 N". Tanggapan yang paling tepat?',
+      ['Benar, itu konversi biasa', 'Kurang tepat: kg adalah massa; yang setara 9,8 N adalah gaya berat massa 1 kg (1 kgf)', 'Salah, 1 kg = 1 N', 'Salah, 1 kg = 100 N'], 1,
+      'Satuan gaya berakhiran f atau N. Apakah kg termasuk?',
+      'kg adalah satuan massa, N adalah satuan gaya, sehingga tidak ada konversi langsung. Gaya berat massa 1 kg di gravitasi standar adalah 9,80665 N, itulah 1 kgf.',
+      { 0: 'Massa dan gaya adalah besaran berbeda; konversi langsung tidak ada.' }),
+    mc('gaya-9', 'gaya', 'jebakan', 'Astronot bermassa 70 kg pergi ke Bulan (g ≈ 1,62 m/s²). Apa yang terjadi?',
+      ['Massanya tetap 70 kg, gaya beratnya turun', 'Massanya turun, gaya beratnya tetap', 'Massa dan gaya beratnya sama-sama turun', 'Massa dan gaya beratnya sama-sama tetap'], 0,
+      'W = m × g. Mana yang berubah ketika g berubah?',
+      'Massa adalah banyaknya materi dan tidak berubah. Gaya berat W = m × g mengikuti g, sehingga turun di Bulan.',
+      { 2: 'Massa adalah sifat benda dan tidak ikut turun.', 3: 'Gaya berat bergantung pada g, jadi berubah.' }),
+    calc('gaya-10', 'gaya', 'gabungan', 'Massa 70 kg berada di Bulan (g ≈ 1,62 m/s², pendekatan). Berapa gaya beratnya dalam kgf?', 'kgf', 2,
+      () => { const sol = Core.weightSteps(70, 1.62, 'Bulan'); return { result: sol.kgf, unit: 'kgf', steps: sol.steps }; },
+      'Hitung W = m × g dalam N, lalu bagi 9,80665 untuk mendapat kgf.',
+      [
+        { value: 113.4, dp: 1, msg: 'Itu gaya beratnya dalam newton. Soal meminta kgf: bagi dengan 9,80665.' },
+        { value: 70, dp: 1, msg: '70 adalah massa dalam kg. Gaya berat di Bulan lebih kecil karena g-nya lebih kecil.' },
+      ]),
+  ];
+
+  return sets;})();
 </script>
 
 <script id="app">
@@ -1778,6 +1818,221 @@ MODULES.tekanan = {
 };
 
 PAGES.tekanan = (main) => renderModule(main, MODULES.tekanan);
+
+/* ---------- Modul Gaya ---------- */
+function forceMotionVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const motion = h('div', { class: 'formula-box' });
+  const stepsBox = h('div');
+  const M = sliderField({ label: 'Massa m', unit: 'kg', min: 1, max: 20, step: 1, value: 4, positive: true, onChange: update });
+  const F = sliderField({ label: 'Gaya resultan F', unit: 'N', min: 0, max: 50, step: 1, value: 12, fieldMin: 0, minMsg: 'Simulasi ini memakai besar gaya, jadi minimal 0.', onChange: update });
+  const T = sliderField({ label: 'Waktu t sejak diam', unit: 's', min: 0, max: 5, step: 0.1, value: 2, fieldMin: 0, fieldMax: 5, minMsg: 'Waktu minimal 0.', onChange: update });
+  const runBtn = h('button', { class: 'btn', type: 'button' }, 'Jalankan');
+  const resetBtn = h('button', { class: 'btn secondary', type: 'button' }, 'Reset');
+  const note = h('p', { class: 'hint' }, prefersReducedMotion() ? 'Pengaturan gerak dikurangi aktif, jadi animasi dimatikan. Geser slider waktu untuk melihat geraknya.' : 'Tekan Jalankan untuk melihat balok bergerak dari keadaan diam, atau geser slider waktu sendiri.');
+  let timer = null;
+  function stop() { if (timer) { cancelAnimationFrame(timer); timer = null; } runBtn.textContent = 'Jalankan'; }
+  runBtn.disabled = prefersReducedMotion();
+  runBtn.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    let t0 = T.read().ok ? T.read().value : 0;
+    if (t0 >= 5) t0 = 0;
+    const started = performance.now() - t0 * 1000;
+    runBtn.textContent = 'Jeda';
+    const tick = (now) => {
+      if (!fig.isConnected) { timer = null; return; }
+      const t = Math.min((now - started) / 1000, 5);
+      T.setValue(Math.round(t * 10) / 10);
+      update();
+      if (t >= 5) { stop(); return; }
+      timer = requestAnimationFrame(tick);
+    };
+    timer = requestAnimationFrame(tick);
+  });
+  resetBtn.addEventListener('click', () => { stop(); T.setValue(0); update(); });
+
+  function draw(m, f, a, t) {
+    const v = a * t;
+    const x = 0.5 * a * t * t;
+    const scaleMax = a > 0 ? niceCeil(0.5 * a * 25) : 1;
+    const x0 = 30;
+    const x1 = 430;
+    const bw = 58;
+    const left = x0 + (x / scaleMax) * (x1 - x0 - bw);
+    const svg = s('svg', { viewBox: '0 0 460 240', role: 'img', 'aria-label': 'Balok bermassa ' + Core.fmt(m) + ' kg didorong gaya ' + Core.fmt(f) + ' N, percepatan ' + Core.fmt(a, 5) + ' m/s². Pada t = ' + Core.fmt(t) + ' s posisinya ' + Core.fmt(x, 5) + ' m dan kecepatannya ' + Core.fmt(v, 5) + ' m/s.' });
+    svg.append(s('title', {}, 'Gaya, massa, dan percepatan'), arrowDefs('fmArrow'));
+    svg.append(
+      s('text', { x: x0, y: 24, class: 'tb' }, 'a = ' + Core.fmt(a, 5) + ' m/s²'),
+      s('text', { x: x0 + 150, y: 24, class: 't' }, 'v = ' + Core.fmt(v, 5) + ' m/s'),
+      s('text', { x: x0 + 290, y: 24, class: 't' }, 'x = ' + Core.fmt(x, 5) + ' m'),
+      s('rect', { x: left, y: 130, width: bw, height: 40, rx: 4, class: 'tint' }),
+      s('text', { x: left + bw / 2, y: 155, 'text-anchor': 'middle', class: 'tm' }, Core.fmt(m) + ' kg'),
+      s('line', { x1: x0, y1: 172, x2: x1, y2: 172, class: 'ln' }));
+    if (f > 0) {
+      const L = 30 + 90 * Math.min(f / 50, 1);
+      const ax = Math.min(left, 450 - L);
+      svg.append(
+        s('line', { x1: ax, y1: 108, x2: ax + L, y2: 108, class: 'ac', 'marker-end': 'url(#fmArrow)', 'stroke-width': 5 }),
+        s('text', { x: ax, y: 96, class: 'tb' }, 'F = ' + Core.fmt(f) + ' N'));
+    } else {
+      svg.append(s('text', { x: left, y: 100, class: 'tb' }, 'F = 0 N, tidak ada percepatan'));
+    }
+    const step = niceStep(scaleMax, 5);
+    for (let k = 0; k * step <= scaleMax + 1e-9; k += 1) {
+      const px = x0 + ((k * step) / scaleMax) * (x1 - x0 - bw) + bw / 2;
+      svg.append(s('line', { x1: px, y1: 172, x2: px, y2: 180, class: 'ln' }), s('text', { x: px, y: 196, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(k * step, 4)));
+    }
+    svg.append(s('text', { x: x0, y: 226, class: 'ts' }, 'Jalur dalam meter (satu dimensi, tanpa gesekan)'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Gaya makin besar atau massa makin kecil, balok makin cepat bertambah kecepatannya.'));
+  }
+  function update() {
+    const m = M.read();
+    const f = F.read();
+    const t = T.read();
+    if (!m.ok || !f.ok || !t.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.accelerationSteps(f.value, m.value);
+      const a = sol.result;
+      draw(m.value, f.value, a, t.value);
+      out.replaceChildren(h('div', { class: 'result' }, 'a ', Core.eqv(a), ' m/s²'));
+      const v = a * t.value;
+      const x = 0.5 * a * t.value * t.value;
+      motion.replaceChildren(
+        h('div', {}, 'Dari diam pada t = ' + Core.fmt(t.value) + ' s:'),
+        h('div', {}, 'v = a × t = ' + Core.fmt(a) + ' × ' + Core.fmt(t.value) + ' ' + Core.eqv(v) + ' m/s'),
+        h('div', {}, 'x = ½ × a × t² = 0,5 × ' + Core.fmt(a) + ' × ' + Core.fmt(t.value) + '² ' + Core.eqv(x) + ' m'));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung percepatan'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' }, M.el, F.el, T.el, h('div', { class: 'btn-row' }, runBtn, resetBtn), note, out, motion),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+function forceWeightVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const stepsBox = h('div');
+  const out = h('div', { 'aria-live': 'polite' });
+  const M = numberField({ label: 'Massa m (kg)', value: 70, positive: true, onChange: update });
+  const Ge = numberField({ label: 'g di Bumi (m/s²)', value: 9.80665, positive: true, hint: 'Gravitasi standar; lokasi nyata sedikit berbeda.', onChange: update });
+  const Gm = numberField({ label: 'g di Bulan (m/s², pendekatan)', value: 1.62, positive: true, onChange: update });
+  function panel(svg, x, title, m, g, W, Wmax) {
+    const L = 20 + 35 * (W / Wmax);
+    svg.append(
+      s('text', { x: x + 90, y: 30, 'text-anchor': 'middle', class: 'tb' }, title),
+      s('text', { x: x + 90, y: 48, 'text-anchor': 'middle', class: 'ts' }, 'g = ' + Core.fmt(g, 6) + ' m/s²'),
+      s('rect', { x: x + 60, y: 90, width: 60, height: 60, rx: 4, class: 'tint' }),
+      s('text', { x: x + 90, y: 126, 'text-anchor': 'middle', class: 'tm' }, Core.fmt(m) + ' kg'),
+      s('line', { x1: x + 90, y1: 152, x2: x + 90, y2: 152 + L, class: 'ac', 'marker-end': 'url(#fwArrow)', 'stroke-width': 5 }),
+      s('line', { x1: x + 10, y1: 222, x2: x + 170, y2: 222, class: 'ln' }),
+      s('text', { x: x + 90, y: 244, 'text-anchor': 'middle', class: 'tb' }, 'W = ' + Core.fmt(W, 5) + ' N'));
+  }
+  function update() {
+    const m = M.read();
+    const ge = Ge.read();
+    const gm = Gm.read();
+    if (!m.ok || !ge.ok || !gm.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const e = Core.weightSteps(m.value, ge.value, 'Bumi');
+      const b = Core.weightSteps(m.value, gm.value, 'Bulan');
+      const Wmax = Math.max(e.result, b.result);
+      const svg = s('svg', { viewBox: '0 0 460 256', role: 'img', 'aria-label': 'Massa ' + Core.fmt(m.value) + ' kg sama di Bumi dan Bulan. Gaya berat di Bumi ' + Core.fmt(e.result, 5) + ' N, di Bulan ' + Core.fmt(b.result, 5) + ' N.' });
+      svg.append(s('title', {}, 'Massa tetap, gaya berat berubah'), arrowDefs('fwArrow'));
+      panel(svg, 20, 'Bumi', m.value, ge.value, e.result, Wmax);
+      panel(svg, 270, 'Bulan', m.value, gm.value, b.result, Wmax);
+      fig.replaceChildren(svg, h('figcaption', {}, 'Massa (kg) sama di kedua tempat. Panjang panah gaya berat mengikuti W = m × g.'));
+      out.replaceChildren(h('div', { class: 'result' }, 'Bumi: ' + Core.fmt(e.result, 6) + ' N = ' + Core.fmt(e.kgf, 6) + ' kgf. Bulan: ' + Core.fmt(b.result, 6) + ' N = ' + Core.fmt(b.kgf, 6) + ' kgf.'));
+      stepsBox.replaceChildren(
+        h('div', { class: 'row' }, h('div', {}, h('h3', {}, 'Langkah di Bumi'), stepsList(e.steps)), h('div', {}, h('h3', {}, 'Langkah di Bulan'), stepsList(b.steps))));
+    } catch (err) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, err.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' }, h('div', { class: 'row' }, M.el, Ge.el, Gm.el), out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+const FORCE_USES = {
+  N: 'Satuan SI; 1 N = 1 kg·m/s².',
+  kN: 'Struktur, jembatan, mesin.',
+  kgf: 'Industri lama; gaya berat massa 1 kg di gravitasi standar.',
+  lbf: 'Teknik AS dan Inggris; gaya berat massa 1 pound di gravitasi standar.',
+  dyne: 'Satuan lama sistem CGS; 1 dyne = 10⁻⁵ N.',
+  kip: 'Struktur di AS; 1 kip = 1.000 lbf.',
+};
+
+MODULES.gaya = {
+  id: 'gaya', cat: 'force', kicker: 'Modul 2', title: 'Gaya',
+  lead: 'Gaya mengubah gerak benda. Bagian yang paling sering menjebak: beda massa (kg) dengan gaya (N, kgf, lbf).',
+  converter: { value: 5, from: 'kgf', to: 'N' },
+  quiz: () => Quiz(QUIZ.gaya, { startRetry: takeRetry('gaya') }),
+  understand: () => [
+    h('p', {}, 'Gaya adalah dorongan atau tarikan yang dapat mengubah gerak atau bentuk benda. Untuk satu benda bermassa tetap, gaya resultan (jumlah semua gaya yang bekerja pada benda) memenuhi hukum Newton II:'),
+    h('div', { class: 'formula-box' }, 'F = m × a'),
+    h('ul', { class: 'legend' },
+      h('li', {}, h('strong', {}, 'F'), ' gaya resultan, dalam newton (N).'),
+      h('li', {}, h('strong', {}, 'm'), ' massa, dalam kilogram (kg).'),
+      h('li', {}, h('strong', {}, 'a'), ' percepatan, dalam meter per detik kuadrat (m/s²).'),
+      h('li', {}, '1 N = 1 kg·m/s²: gaya yang memberi massa 1 kg percepatan 1 m/s². Kira-kira berat sebuah apel kecil.')),
+    h('p', {}, 'Gaya resultan bukan salah satu gaya pada benda. Balok diam di meja tetap ditarik gaya berat 20 N ke bawah, tetapi meja mendorong 20 N ke atas, jadi resultannya 0 N dan balok tidak bergerak.'),
+  ],
+  visuals: [
+    { title: 'Coba: gaya, massa, percepatan', text: 'Ubah massa dan gaya, lalu geser waktu atau tekan Jalankan. Model ini satu dimensi, massa tetap, tanpa gesekan, dan benda mulai dari diam.', build: forceMotionVisual },
+    { title: 'Coba: massa dan berat', text: 'Massa tetap di mana pun. Gaya berat W = m × g mengikuti gravitasi lokasi, jadi nilai g harus dinyatakan. Nilai g di sini bisa kamu ubah.', build: forceWeightVisual },
+  ],
+  unitsContent: () => [
+    h('p', {}, 'Faktor di tabel menjawab: 1 satuan ini sama dengan berapa newton?'),
+    unitTable('force', FORCE_USES, false),
+    pitfallBox('kg adalah massa, kgf adalah gaya.', 'Satuan gaya selalu berakhiran f (kgf, lbf) atau N. Karena itu aplikasi ini tidak punya konversi kg ke N: itu bukan penggantian satuan, melainkan perhitungan W = m × g yang butuh nilai g.'),
+    h('p', {}, 'Faktor kgf dan lbf bisa diturunkan dari definisinya: gaya berat massa 1 satuan di gravitasi standar g = 9,80665 m/s².'),
+    exampleCard({ title: 'Asal angka kgf', problem: 'Gaya berat massa 1 kg pada g = 9,80665 m/s². Berapa N?', solution: () => Core.newtonSteps(1, 9.80665), note: 'Itu definisi 1 kgf = 9,80665 N, jadi faktor kgf tetap.' }),
+    exampleCard({ title: 'Asal angka lbf', problem: 'Gaya berat massa 1 pound (0,45359237 kg) pada g = 9,80665 m/s². Berapa N?', solution: () => Core.newtonSteps(0.45359237, 9.80665), note: 'Hasilnya 4,4482216 N, yaitu 1 lbf.' }),
+  ],
+  examples: [
+    { title: 'Contoh 1: hukum Newton II', problem: 'Benda bermassa 2 kg mengalami percepatan 3 m/s². Berapa gaya resultannya?', solution: () => Core.newtonSteps(2, 3) },
+    { title: 'Contoh 2: kgf ke N', problem: 'Ubah 5 kgf ke N.', solution: () => Core.convertSteps('force', 5, 'kgf', 'N') },
+    { title: 'Contoh 3: lbf ke kN', problem: 'Ubah 500 lbf ke kN.', solution: () => Core.convertSteps('force', 500, 'lbf', 'kN') },
+    { title: 'Contoh 4: gaya berat di Bumi', problem: 'Massa 70 kg, g = 9,80665 m/s². Berapa gaya beratnya?', solution: () => Core.weightSteps(70, 9.80665, 'Bumi, gravitasi standar') },
+    { title: 'Contoh 5: gaya berat di Bulan', problem: 'Massa yang sama, 70 kg, di Bulan dengan g ≈ 1,62 m/s² (pendekatan). Berapa gaya beratnya?', solution: () => Core.weightSteps(70, 1.62, 'Bulan, pendekatan'), note: 'Massa tetap 70 kg; hanya gaya beratnya yang turun menjadi sekitar seperenam.' },
+  ],
+  pitfalls: [
+    ['Jangan menyamakan kg dengan N.', '1 kg ≠ 9,8 N. Yang sama dengan 9,8 N adalah gaya berat massa 1 kg di Bumi, yaitu 1 kgf.'],
+    ['Berat bukan massa.', 'Massa (kg) tidak berubah ketika pindah tempat. Gaya berat (N) berubah mengikuti g.'],
+    ['Gunakan gaya resultan pada F = m × a.', 'Jumlahkan semua gaya (dengan arah) lebih dulu. Benda diam punya resultan 0 N walau ada gaya berat.'],
+  ],
+  advanced: () => [
+    h('p', {}, 'Dua satuan tambahan ada di konverter Python repository ini: dyne dan kip.'),
+    unitTable('force', FORCE_USES, true),
+    Converter('force', { value: 1, from: 'kip', to: 'lbf', advanced: true }),
+    pythonSection({
+      python: {
+        text: 'Polanya sama persis dengan tekanan: dictionary faktor ke newton, lalu kali faktor asal dan bagi faktor tujuan. Tidak ada kg di sini karena kg bukan satuan gaya.',
+        file: 'converters/force.py',
+        code: 'FACTORS = {\n    "N": 1,\n    "kN": 1_000,\n    "kgf": 9.80665,\n    "lbf": 4.4482216152605,\n    "dyne": 1e-5,\n    "kip": 4_448.2216152605,\n}\n\ndef convert_force(value, from_unit, to_unit):\n    return convert_linear(value, from_unit, to_unit, FACTORS)',
+      },
+    }),
+  ],
+};
+
+PAGES.gaya = (main) => renderModule(main, MODULES.gaya);
 
 function buildNav() {
   const nav = document.getElementById('nav');
