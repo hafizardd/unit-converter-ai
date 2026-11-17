@@ -8,6 +8,11 @@ Gunakan Conventional Commits berbahasa Inggris, subjek huruf kecil, maksimum 72
 karakter. Contoh: `feat(converters): add nautical mile conversion`.
 Satu commit untuk satu perubahan yang dapat dijelaskan.
 
+Siapkan Node.js 24 untuk pengujian mesin hitung HTML. CI memasangnya secara eksplisit.
+Jika mengubah `belajar/index.html`, jalankan juga pemeriksaan browser lokal:
+`python scripts/check_learning_browser.py` (Edge/Chromium terpasang diperlukan;
+gunakan `--browser PATH` bila tidak ditemukan otomatis).
+
 ```text
 python -m pip install -r requirements-dev.txt
 python -m ruff format .

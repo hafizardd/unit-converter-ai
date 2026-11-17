@@ -1,0 +1,2318 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Belajar Konversi Satuan</title>
+<style>
+:root {
+  --bg: #fbfaf7;
+  --panel: #ffffff;
+  --ink: #1f2430;
+  --muted: #566070;
+  --line: #d9dde4;
+  --soft: #f0f2f6;
+  --accent: #3b3f9e;
+  --accent-soft: #e9eafa;
+  --ok: #1b6b3a;
+  --ok-soft: #e3f4ea;
+  --bad: #a3221f;
+  --bad-soft: #fbe9e8;
+  --warn: #8a5a00;
+  --warn-soft: #fff3d6;
+  --focus: #0a58ca;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-math: "Cambria Math", "STIX Two Math", "Latin Modern Math", Cambria, Georgia, serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+}
+body[data-topic="tekanan"] { --accent: #0b5f8a; --accent-soft: #e2f1f9; }
+body[data-topic="gaya"] { --accent: #a64300; --accent-soft: #fdeede; }
+body[data-topic="panjang"] { --accent: #1d6b3a; --accent-soft: #e3f4ea; }
+body[data-topic="suhu"] { --accent: #a3224f; --accent-soft: #fbe6ee; }
+[data-topic="tekanan"] { --accent: #0b5f8a; --accent-soft: #e2f1f9; }
+[data-topic="gaya"] { --accent: #a64300; --accent-soft: #fdeede; }
+[data-topic="panjang"] { --accent: #1d6b3a; --accent-soft: #e3f4ea; }
+[data-topic="suhu"] { --accent: #a3224f; --accent-soft: #fbe6ee; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; text-wrap: balance; }
+h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+p { margin: 0 0 .85rem; max-width: 70ch; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.skip {
+  position: absolute; left: 8px; top: -60px; z-index: 20;
+  background: var(--ink); color: #fff; padding: .5rem .8rem; border-radius: 6px;
+}
+.skip:focus { top: 8px; }
+
+.topbar { background: var(--panel); border-bottom: 1px solid var(--line); }
+.topbar-in {
+  max-width: 1120px; margin: 0 auto;
+  padding: .7rem max(16px, env(safe-area-inset-left, 0px)) .5rem;
+}
+.brand { font-weight: 700; font-size: 1.05rem; margin-bottom: .4rem; }
+.brand small { font-weight: 400; color: var(--muted); margin-left: .5rem; }
+.nav { display: flex; flex-wrap: wrap; gap: .35rem; }
+.nav a {
+  text-decoration: none; color: var(--ink);
+  padding: .4rem .8rem; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--panel); font-size: .95rem;
+}
+.nav a:hover { background: var(--soft); }
+.nav a[aria-current="page"] {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+
+main {
+  max-width: 1120px; margin: 0 auto;
+  padding: 1.5rem max(16px, env(safe-area-inset-left, 0px)) 4rem;
+}
+main:focus { outline: none; }
+.page-head { margin-bottom: 1.2rem; }
+.lead { font-size: 1.1rem; color: var(--muted); }
+.section { margin: 2.2rem 0; }
+.section > h2 { padding-bottom: .35rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+.kicker { text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; color: var(--accent); font-weight: 700; }
+.notice {
+  border-left: 4px solid var(--warn); background: var(--warn-soft);
+  padding: .6rem .9rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1rem 0;
+}
+.notice.info { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- Komponen ---------- */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .9rem; }
+a.card { display: block; color: inherit; text-decoration: none; border-top: 4px solid var(--accent); }
+a.card:hover { background: var(--soft); }
+a.card h3 { color: var(--accent); margin-bottom: .25rem; }
+a.card p { margin: 0; color: var(--muted); font-size: .95rem; }
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer; color: #fff; background: var(--accent);
+  border: 1px solid var(--accent); padding: .5rem .95rem; border-radius: 8px;
+}
+.btn:hover { filter: brightness(1.12); }
+.btn.secondary { background: var(--panel); color: var(--accent); }
+.btn.secondary:hover { background: var(--accent-soft); filter: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: .5rem; margin: .7rem 0; }
+.field { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.field > label, .field > .lbl { font-weight: 600; font-size: .92rem; }
+.field input[type="text"], .field select {
+  font: inherit; width: 100%; min-width: 0; padding: .45rem .6rem;
+  border: 1px solid #7d8696; border-radius: 8px; background: #fff; color: var(--ink);
+}
+.field input[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.3em; }
+.hint { color: var(--muted); font-size: .88rem; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; align-items: start; }
+.slider-field { display: flex; flex-direction: column; gap: .15rem; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: .2rem 0 .5rem; }
+.check { display: flex; align-items: center; gap: .5rem; margin: .5rem 0; }
+.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.result {
+  background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius);
+  padding: .75rem 1rem; font-family: var(--font-math); font-size: 1.25rem; overflow-wrap: anywhere;
+}
+.result .big { font-size: 1.5rem; font-weight: 700; }
+.result.err-box { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); font-family: var(--font); font-size: 1rem; }
+.steps { list-style: none; margin: .6rem 0; padding: 0; counter-reset: st; display: grid; gap: .55rem; }
+.steps > li {
+  counter-increment: st; position: relative; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; padding: .5rem .8rem .55rem 2.7rem;
+}
+.steps > li::before {
+  content: counter(st); position: absolute; left: .7rem; top: .6rem; width: 1.55rem; height: 1.55rem;
+  border-radius: 50%; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 700;
+  display: grid; place-items: center;
+}
+.steps .st-title { font-weight: 700; font-size: .9rem; color: var(--accent); }
+.steps .fl { font-family: var(--font-math); font-size: 1.07rem; overflow-wrap: anywhere; line-height: 1.5; }
+.formula-box {
+  font-family: var(--font-math); font-size: 1.2rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); padding: .55rem .9rem; margin: .6rem 0; overflow-wrap: anywhere;
+}
+.pitfall {
+  border-left: 4px solid var(--warn); background: var(--warn-soft);
+  padding: .55rem .9rem; border-radius: 0 8px 8px 0; margin: .7rem 0;
+}
+.pitfall strong:first-child { color: var(--warn); }
+.fig { margin: 0; border: 1px solid var(--line); background: #fff; border-radius: var(--radius); padding: .5rem; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig figcaption { color: var(--muted); font-size: .88rem; padding: .3rem .4rem 0; }
+.split { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin: 1rem 0; }
+.split > * { min-width: 0; }
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "controls visual" "steps visual"; }
+  .split > .controls { grid-area: controls; }
+  .split > .visual { grid-area: visual; align-self: start; position: sticky; top: 1rem; }
+  .split > .steps-area { grid-area: steps; }
+}
+.table-wrap { overflow-x: auto; margin: .6rem 0; }
+table.data { border-collapse: collapse; width: 100%; font-size: .95rem; background: #fff; }
+table.data th, table.data td { text-align: left; padding: .45rem .65rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data th { background: var(--soft); font-size: .88rem; }
+table.data td.num { font-family: var(--font-math); white-space: nowrap; }
+details { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: .45rem .85rem; margin: .7rem 0; }
+details > summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: .5rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+.tabs button {
+  font: inherit; cursor: pointer; padding: .35rem .8rem; border-radius: 999px;
+  border: 1px solid #7d8696; background: #fff; color: var(--ink);
+}
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.pill { display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--accent-soft); color: var(--accent); }
+.toc { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 0; }
+.toc button { font: inherit; font-size: .9rem; cursor: pointer; padding: .25rem .7rem; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--accent); }
+.toc button:hover { background: var(--accent-soft); }
+svg .t { font: 14px var(--font); fill: var(--ink); }
+svg .ts { font: 13px var(--font); fill: #475163; }
+svg .tm { font: 15px var(--font-math); fill: var(--ink); }
+svg .tb { font: 700 14px var(--font); fill: var(--accent); }
+svg .ln { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+svg .ac { stroke: var(--accent); fill: none; stroke-width: 3; }
+svg .acf { fill: var(--accent); }
+svg .soft { fill: var(--soft); stroke: var(--line); }
+svg .tint { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+svg .danger { stroke: var(--bad); fill: none; stroke-width: 2.5; }
+pre.code {
+  font-family: var(--font-mono); font-size: .88rem; line-height: 1.5; background: #1f2430; color: #eef0f5;
+  border-radius: 8px; padding: .8rem 1rem; overflow-x: auto; margin: .6rem 0;
+}
+.legend { margin: .3rem 0 .8rem; padding-left: 1.2rem; max-width: 70ch; }
+.legend li { margin: .15rem 0; }
+.example { margin: 1rem 0; }
+.example > h3 { margin-bottom: .2rem; }
+.example .problem { font-weight: 600; margin-bottom: .4rem; }
+.module-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.module-grid > * { min-width: 0; }
+.quiz { margin-top: .5rem; }
+.quiz-top { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+.dots { display: flex; flex-wrap: wrap; gap: .3rem; }
+.dot {
+  font: inherit; font-size: .85rem; min-width: 2.3rem; padding: .25rem .4rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid #7d8696; background: #fff; color: var(--ink);
+}
+.dot[aria-current="true"] { outline: 3px solid var(--accent); outline-offset: 1px; font-weight: 700; }
+.dot.ok { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.dot.late { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.dot.bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.dot.rev { background: var(--soft); border-color: var(--muted); color: var(--muted); }
+.qcard h3 { font-size: 1.15rem; margin-bottom: .6rem; }
+.qcard fieldset { border: 0; padding: 0; margin: 0 0 .6rem; }
+.qcard legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.opt { display: flex; gap: .6rem; align-items: flex-start; padding: .5rem .7rem; border: 1px solid var(--line); border-radius: 8px; margin: .35rem 0; cursor: pointer; background: #fff; }
+.opt:hover { background: var(--soft); }
+.opt input { margin-top: .3rem; accent-color: var(--accent); }
+.num-answer { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-start; max-width: 28rem; }
+.num-answer .field { flex: 1 1 10rem; }
+.num-answer .unit { padding-top: 2.05rem; font-weight: 700; font-family: var(--font-math); font-size: 1.1rem; }
+.fb { margin: .6rem 0; padding: .55rem .85rem; border-radius: 8px; border: 1px solid var(--line); background: var(--soft); }
+.fb.ok { background: var(--ok-soft); border-color: var(--ok); }
+.fb.bad { background: var(--bad-soft); border-color: var(--bad); }
+.fb.hint { background: var(--warn-soft); border-color: var(--warn); }
+.legend-line { color: var(--muted); font-size: .85rem; margin: .4rem 0 0; }
+.summary td.n, .summary th.n { text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 480px) {
+  .nav a { padding: .35rem .65rem; font-size: .9rem; }
+}
+</style>
+</head>
+<body data-topic="mulai">
+<a class="skip" id="skip" href="#">Lewati ke isi halaman</a>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">Belajar Konversi Satuan <small>tekanan · gaya · panjang · suhu</small></div>
+    <nav class="nav" id="nav" aria-label="Navigasi utama"></nav>
+  </div>
+</header>
+<main id="utama" tabindex="-1"></main>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script id="core">
+/* Mesin hitung: fungsi murni tanpa DOM, diuji terhadap konverter Python. */
+const Core = (function () {
+  'use strict';
+
+  /* ---------- Data satuan (faktor sama dengan converters/*.py) ---------- */
+  const CATEGORIES = {
+    pressure: {
+      name: 'Tekanan', base: 'Pa',
+      units: {
+        Pa: { label: 'Pa', name: 'pascal', f: 1 },
+        kPa: { label: 'kPa', name: 'kilopascal', f: 1000 },
+        MPa: { label: 'MPa', name: 'megapascal', f: 1000000 },
+        bar: { label: 'bar', name: 'bar', f: 100000 },
+        mbar: { label: 'mbar', name: 'milibar', f: 100, adv: true },
+        atm: { label: 'atm', name: 'atmosfer standar', f: 101325 },
+        psi: { label: 'psi', name: 'pound-gaya per inci persegi', f: 6894.757293168 },
+        Torr: { label: 'Torr', name: 'torr', f: 101325 / 760, adv: true },
+      },
+    },
+    force: {
+      name: 'Gaya', base: 'N',
+      units: {
+        N: { label: 'N', name: 'newton', f: 1 },
+        kN: { label: 'kN', name: 'kilonewton', f: 1000 },
+        kgf: { label: 'kgf', name: 'kilogram-gaya', f: 9.80665 },
+        lbf: { label: 'lbf', name: 'pound-gaya', f: 4.4482216152605 },
+        dyne: { label: 'dyne', name: 'dyne', f: 1e-5, adv: true },
+        kip: { label: 'kip', name: 'kip (1.000 lbf)', f: 4448.2216152605, adv: true },
+      },
+    },
+    length: {
+      name: 'Panjang', base: 'm',
+      units: {
+        nm: { label: 'nm', name: 'nanometer', f: 1e-9, adv: true },
+        um: { label: 'µm', name: 'mikrometer', f: 1e-6, adv: true },
+        mm: { label: 'mm', name: 'milimeter', f: 0.001 },
+        cm: { label: 'cm', name: 'sentimeter', f: 0.01 },
+        m: { label: 'm', name: 'meter', f: 1 },
+        km: { label: 'km', name: 'kilometer', f: 1000 },
+        in: { label: 'in', name: 'inci', f: 0.0254 },
+        ft: { label: 'ft', name: 'kaki (feet)', f: 0.3048 },
+        yd: { label: 'yd', name: 'yard', f: 0.9144, adv: true },
+        mi: { label: 'mi', name: 'mil', f: 1609.344 },
+        nmi: { label: 'nmi', name: 'mil laut', f: 1852, adv: true },
+      },
+    },
+  };
+  const TEMP_UNITS = {
+    C: { label: '°C', name: 'derajat Celsius', freeze: 0, boil: 100 },
+    F: { label: '°F', name: 'derajat Fahrenheit', freeze: 32, boil: 212 },
+    K: { label: 'K', name: 'kelvin', freeze: 273.15, boil: 373.15 },
+    R: { label: '°R', name: 'derajat Rankine', freeze: 491.67, boil: 671.67, adv: true },
+  };
+  const DELTA_PER_C = { C: 1, K: 1, F: 1.8, R: 1.8 };
+  const ABS_ZERO_C = -273.15;
+
+  /* ---------- Format dan baca angka (gaya Indonesia) ---------- */
+  const SUP = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '-': '⁻' };
+
+  function groupThousands(intPart) {
+    return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function fmt(n, digits) {
+    digits = digits || 8;
+    if (!Number.isFinite(n)) return String(n);
+    if (n === 0) return '0';
+    const neg = n < 0 ? '−' : '';
+    const a = Math.abs(n);
+    if (a < 1e-4 || a >= 1e15) {
+      const parts = a.toExponential(digits - 1).split('e');
+      let mant = parts[0].indexOf('.') >= 0 ? parts[0].replace(/0+$/, '').replace(/\.$/, '') : parts[0];
+      mant = mant.replace('.', ',');
+      const exp = String(parseInt(parts[1], 10)).split('').map((c) => SUP[c]).join('');
+      return neg + (mant === '1' ? '' : mant + ' × ') + '10' + exp;
+    }
+    const text = String(Number(a.toPrecision(digits)));
+    const pieces = text.split('.');
+    return neg + groupThousands(pieces[0]) + (pieces[1] ? ',' + pieces[1] : '');
+  }
+
+  function isRounded(n, digits) {
+    digits = digits || 8;
+    if (!Number.isFinite(n) || n === 0) return false;
+    const a = Math.abs(n);
+    return Math.abs(Number(a.toPrecision(digits)) - a) > 1e-12 * a;
+  }
+
+  /* "= 12,5" atau "≈ 12,345679" bila angka tampilan dibulatkan. */
+  function eqv(n, digits) {
+    return (isRounded(n, digits) ? '≈ ' : '= ') + fmt(n, digits);
+  }
+
+  /* Hasil tampilan: teks dengan tanda ≈ bila dibulatkan. */
+  function shown(n, digits) {
+    return (isRounded(n, digits) ? '≈ ' : '') + fmt(n, digits);
+  }
+
+  function fail(error, extra) {
+    return Object.assign({ ok: false, error }, extra || {});
+  }
+
+  function parseNumber(text) {
+    if (typeof text !== 'string') return fail('Isi angka dulu.', { empty: true });
+    const raw = text.trim().replace(/−/g, '-');
+    if (raw === '') return fail('Isi angka dulu.', { empty: true });
+    if (/\s/.test(raw)) return fail('Tulis angka tanpa spasi, misalnya 1000 atau 1,5.');
+    if (/[.,].*[.,]/.test(raw)) {
+      return fail('Jangan pakai pemisah ribuan. Tulis 1000,5 atau 1000.5, bukan 1.000,5.');
+    }
+    const m = /^([+-]?)(\d*)([.,]?)(\d*)(?:[eE]([+-]?\d+))?$/.exec(raw);
+    if (!m || (m[2] === '' && m[4] === '')) {
+      return fail('Format angka tidak dikenali. Contoh yang benar: 12, 1,5, 1.5, atau 1e-3.');
+    }
+    const intPart = m[2];
+    const sep = m[3];
+    const frac = m[4];
+    /* Titik + tepat 3 digit lazim berarti ribuan di Indonesia; koma selalu desimal. */
+    if (sep === '.' && frac.length === 3 && intPart !== '' && intPart !== '0' && m[5] === undefined) {
+      return fail(
+        'Angka "' + raw + '" ambigu (ribuan atau desimal?). Untuk desimal pakai koma: ' + intPart + ',' + frac +
+        '. Untuk ribuan tulis ' + intPart + frac + ' tanpa titik.'
+      );
+    }
+    const normalized = m[1] + (intPart || '0') + (frac ? '.' + frac : '') + (m[5] !== undefined ? 'e' + m[5] : '');
+    const value = Number(normalized);
+    if (!Number.isFinite(value)) return fail('Angka terlalu besar.');
+    return { ok: true, value };
+  }
+
+  /* ---------- Validasi dan konversi (sama dengan Python) ---------- */
+  function validateNumber(x) {
+    if (typeof x !== 'number') throw new Error('Nilai harus berupa angka.');
+    if (!Number.isFinite(x)) throw new Error('Nilai harus terbatas; NaN dan infinity tidak didukung.');
+    return x;
+  }
+
+  function convertLinear(cat, value, from, to) {
+    validateNumber(value);
+    const c = CATEGORIES[cat];
+    if (!c || !(from in c.units) || !(to in c.units)) {
+      throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    }
+    return validateNumber((value * c.units[from].f) / c.units[to].f);
+  }
+
+  function toCelsius(value, unit) {
+    if (unit === 'C') return value;
+    if (unit === 'F') return ((value - 32) * 5) / 9;
+    if (unit === 'K') return value - 273.15;
+    return (value * 5) / 9 - 273.15;
+  }
+
+  function fromCelsius(c, unit) {
+    if (unit === 'C') return c;
+    if (unit === 'F') return (c * 9) / 5 + 32;
+    if (unit === 'K') return c + 273.15;
+    return ((c + 273.15) * 9) / 5;
+  }
+
+  function convertTemperature(value, from, to) {
+    validateNumber(value);
+    if (!(from in TEMP_UNITS) || !(to in TEMP_UNITS)) throw new Error('Satuan suhu tidak tersedia.');
+    const celsius = toCelsius(value, from);
+    if (celsius < ABS_ZERO_C - 1e-9) throw new Error('Suhu tidak boleh di bawah nol mutlak (0 K).');
+    return validateNumber(fromCelsius(Math.max(celsius, ABS_ZERO_C), to));
+  }
+
+  function convertDelta(value, from, to) {
+    validateNumber(value);
+    if (!(from in DELTA_PER_C) || !(to in DELTA_PER_C)) throw new Error('Satuan suhu tidak tersedia.');
+    return validateNumber((value * DELTA_PER_C[to]) / DELTA_PER_C[from]);
+  }
+
+  /* ---------- Penyusun langkah hitung (enam bagian) ---------- */
+  function step(title, lines) {
+    return { title, lines };
+  }
+
+  function convertSteps(cat, value, from, to) {
+    const result = convertLinear(cat, value, from, to);
+    const c = CATEGORIES[cat];
+    const A = c.units[from];
+    const B = c.units[to];
+    const base = c.base;
+    const x = value * A.f;
+    const ratio = A.f / B.f;
+    let check;
+    if (from === to) check = 'Satuan asal dan tujuan sama, jadi angkanya tidak berubah.';
+    else if (value === 0) check = 'Nol tetap nol di semua satuan.';
+    else {
+      const bigger = ratio > 1;
+      check = B.label + (bigger ? ' lebih kecil dari ' : ' lebih besar dari ') + A.label +
+        ', jadi ' + (value < 0 ? 'besar nilai mutlaknya' : 'angkanya') + ' harus ' + (bigger ? 'membesar' : 'mengecil') + ': ' +
+        fmt(Math.abs(value)) + ' → ' + fmt(Math.abs(result)) + ' ✓';
+    }
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', [
+          'Diketahui: ' + fmt(value) + ' ' + A.label + '.',
+          'Ditanya: nilainya dalam ' + B.label + '.',
+        ]),
+        step('Rumus', [
+          'hasil = nilai × faktor asal ÷ faktor tujuan',
+          'Faktor = "1 satuan ini sama dengan berapa ' + base + '?" Satuan ' + base + ' menjadi perantara.',
+        ]),
+        step('Substitusi faktor', [
+          'Faktor asal: 1 ' + A.label + ' = ' + fmt(A.f, 10) + ' ' + base,
+          'Faktor tujuan: 1 ' + B.label + ' = ' + fmt(B.f, 10) + ' ' + base,
+        ]),
+        step('Hitungan antara', [
+          'Langkah 1 (ke ' + base + '): ' + fmt(value) + ' ' + A.label + ' × ' + fmt(A.f, 10) + ' ' +
+            base + '/' + A.label + ' ' + eqv(x) + ' ' + base,
+          'Langkah 2 (ke ' + B.label + '): ' + fmt(x) + ' ' + base + ' ÷ ' + fmt(B.f, 10) + ' ' +
+            base + '/' + B.label + ' ' + eqv(result) + ' ' + B.label,
+        ]),
+        step('Hasil akhir', [fmt(value) + ' ' + A.label + ' ' + eqv(result) + ' ' + B.label]),
+        step('Cek masuk akal', [check]),
+      ],
+    };
+  }
+
+  const TEMP_TO_C = {
+    C: '°C = nilai',
+    F: '°C = (°F − 32) × 5/9',
+    K: '°C = K − 273,15',
+    R: '°C = °R × 5/9 − 273,15',
+  };
+  const TEMP_FROM_C = {
+    C: 'nilai = °C',
+    F: '°F = °C × 9/5 + 32',
+    K: 'K = °C + 273,15',
+    R: '°R = (°C + 273,15) × 9/5',
+  };
+
+  function waterRelation(c) {
+    if (Math.abs(c) < 1e-9) return 'tepat di titik beku air';
+    if (c < 0) return 'di bawah titik beku air';
+    if (Math.abs(c - 100) < 1e-9) return 'tepat di titik didih air';
+    if (c < 100) return 'di antara titik beku dan titik didih air';
+    return 'di atas titik didih air';
+  }
+
+  function temperatureSteps(value, from, to) {
+    const result = convertTemperature(value, from, to);
+    const A = TEMP_UNITS[from];
+    const B = TEMP_UNITS[to];
+    const v = fmt(value);
+    let c;
+    let line1;
+    if (from === 'C') {
+      c = value;
+      line1 = 'Langkah 1 (ke °C): sudah Celsius, °C = ' + v;
+    } else if (from === 'F') {
+      const a = value - 32;
+      c = (a * 5) / 9;
+      line1 = 'Langkah 1 (ke °C): °C = (' + v + ' − 32) × 5/9 = ' + fmt(a) + ' × 5/9 ' + eqv(c) + ' °C';
+    } else if (from === 'K') {
+      c = value - 273.15;
+      line1 = 'Langkah 1 (ke °C): °C = ' + v + ' − 273,15 ' + eqv(c) + ' °C';
+    } else {
+      const a = (value * 5) / 9;
+      c = a - 273.15;
+      line1 = 'Langkah 1 (ke °C): °C = ' + v + ' × 5/9 − 273,15 = ' + fmt(a) + ' − 273,15 ' + eqv(c) + ' °C';
+    }
+    const c2 = Math.max(c, ABS_ZERO_C);
+    const cs = fmt(c2);
+    let line2;
+    if (to === 'C') line2 = 'Langkah 2 (ke °C): hasil = ' + cs + ' °C';
+    else if (to === 'F') {
+      const a = (c2 * 9) / 5;
+      line2 = 'Langkah 2 (ke °F): °F = ' + cs + ' × 9/5 + 32 = ' + fmt(a) + ' + 32 ' + eqv(result) + ' °F';
+    } else if (to === 'K') line2 = 'Langkah 2 (ke K): K = ' + cs + ' + 273,15 ' + eqv(result) + ' K';
+    else {
+      const a = c2 + 273.15;
+      line2 = 'Langkah 2 (ke °R): °R = (' + cs + ' + 273,15) × 9/5 = ' + fmt(a) + ' × 9/5 ' + eqv(result) + ' °R';
+    }
+    const rel = waterRelation(c);
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + v + ' ' + A.label + '.', 'Ditanya: suhu dalam ' + B.label + '.']),
+        step('Rumus', [
+          'Titik nol tiap skala berbeda, jadi pakai perantara °C: kali dan geser titik nol.',
+          'Ke °C: ' + TEMP_TO_C[from],
+          'Dari °C: ' + TEMP_FROM_C[to],
+        ]),
+        step('Substitusi', ['Asal: ' + A.label + ' = ' + v, 'Tujuan: ' + B.label]),
+        step('Hitungan antara', [
+          line1,
+          'Cek batas: ' + fmt(c) + ' °C ≥ −273,15 °C (nol mutlak), jadi suhu ini mungkin.',
+          line2,
+        ]),
+        step('Hasil akhir', [v + ' ' + A.label + ' ' + eqv(result) + ' ' + B.label]),
+        step('Cek masuk akal', [
+          'Suhu ini ' + rel + '. Air membeku di ' + fmt(B.freeze) + ' ' + B.label + ' dan mendidih di ' +
+            fmt(B.boil) + ' ' + B.label + ', jadi hasil ' + fmt(result) + ' ' + B.label + ' ' + rel + ' ✓',
+        ]),
+      ],
+    };
+  }
+
+  function deltaSteps(value, from, to) {
+    const result = convertDelta(value, from, to);
+    const A = TEMP_UNITS[from];
+    const B = TEMP_UNITS[to];
+    const v = fmt(value);
+    const kind = value >= 0 ? 'kenaikan' : 'penurunan';
+    return {
+      result,
+      unit: B.label,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: perubahan suhu Δ = ' + v + ' ' + A.label + '.', 'Ditanya: perubahan itu dalam ' + B.label + '.']),
+        step('Rumus', [
+          'Δhasil = Δnilai × (derajat ' + B.label + ' per 1 °C) ÷ (derajat ' + A.label + ' per 1 °C)',
+          'Perubahan suhu hanya memakai ukuran derajat. Titik nol tidak ikut, jadi tanpa + 32 dan tanpa − 273,15.',
+        ]),
+        step('Substitusi', [
+          'Ukuran perubahan: Δ1 °C = Δ1 K = Δ1,8 °F = Δ1,8 °R',
+          'Derajat ' + A.label + ' per 1 °C = ' + fmt(DELTA_PER_C[from]) + '; derajat ' + B.label + ' per 1 °C = ' + fmt(DELTA_PER_C[to]),
+        ]),
+        step('Hitungan antara', ['Δ ' + B.label + ' = ' + v + ' × ' + fmt(DELTA_PER_C[to]) + ' ÷ ' + fmt(DELTA_PER_C[from]) + ' ' + eqv(result)]),
+        step('Hasil akhir', [kind + ' ' + fmt(Math.abs(value)) + ' ' + A.label + ' sama dengan ' + kind + ' ' + fmt(Math.abs(result)) + ' ' + B.label]),
+        step('Cek masuk akal', [
+          'Tanda ikut: ' + kind + ' tetap ' + kind + '. Yang dibandingkan adalah selisih dalam ' + A.label +
+            ' dan ' + B.label + ', bukan titik suhunya. Tidak ada penambahan offset.',
+        ]),
+      ],
+    };
+  }
+
+  /* Luas dan volume: faktor panjang dipangkatkan 2 atau 3. */
+  function powerSteps(value, from, to, power) {
+    validateNumber(value);
+    const U = CATEGORIES.length.units;
+    if (!(from in U) || !(to in U) || (power !== 2 && power !== 3)) {
+      throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    }
+    const A = U[from];
+    const B = U[to];
+    const k = A.f / B.f;
+    const result = validateNumber(value * Math.pow(k, power));
+    const sup = power === 2 ? '²' : '³';
+    const what = power === 2 ? 'luas' : 'volume';
+    return {
+      result,
+      unit: B.label + sup,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + what + ' ' + fmt(value) + ' ' + A.label + sup + '.', 'Ditanya: ' + what + ' dalam ' + B.label + sup + '.']),
+        step('Rumus', [
+          'k = faktor panjang = 1 ' + A.label + ' dalam ' + B.label + ' = faktor asal ÷ faktor tujuan',
+          'hasil = nilai × k' + (power === 2 ? '²' : '³') + ' (faktor panjang dikalikan ' + (power === 2 ? 'dua kali' : 'tiga kali') + ')',
+        ]),
+        step('Substitusi', ['k = ' + fmt(A.f, 10) + ' m ÷ ' + fmt(B.f, 10) + ' m ' + eqv(k) + ' → 1 ' + A.label + ' = ' + fmt(k) + ' ' + B.label]),
+        step('Hitungan antara', [
+          'k' + sup + ' = ' + fmt(k) + sup + ' ' + eqv(Math.pow(k, power)),
+          'hasil = ' + fmt(value) + ' × ' + fmt(Math.pow(k, power)) + ' ' + eqv(result) + ' ' + B.label + sup,
+        ]),
+        step('Hasil akhir', [fmt(value) + ' ' + A.label + sup + ' ' + eqv(result) + ' ' + B.label + sup]),
+        step('Cek masuk akal', [
+          'Panjang dikali ' + fmt(k) + ', maka ' + what + ' dikali ' + fmt(Math.pow(k, power)) + ' (bukan ' + fmt(k) + ').',
+        ]),
+      ],
+    };
+  }
+
+  /* Tinggi gabungan kaki dan inci -> cm. */
+  function feetInchesSteps(feet, inches) {
+    validateNumber(feet);
+    validateNumber(inches);
+    const totalIn = feet * 12 + inches;
+    const base = convertSteps('length', totalIn, 'in', 'cm');
+    return {
+      result: base.result,
+      unit: 'cm',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: ' + fmt(feet) + ' ft ' + fmt(inches) + ' in (dua komponen, bukan ' + fmt(feet) + ',' + fmt(inches) + ' ft).', 'Ditanya: tinggi dalam cm.']),
+        step('Rumus', ['inci total = kaki × 12 + inci', 'cm = inci total × 2,54 (1 in = 2,54 cm tepat)']),
+        step('Substitusi', ['inci total = ' + fmt(feet) + ' × 12 + ' + fmt(inches)]),
+        step('Hitungan antara', [
+          'inci total = ' + fmt(feet * 12) + ' + ' + fmt(inches) + ' = ' + fmt(totalIn) + ' in',
+          'cm = ' + fmt(totalIn) + ' × 0,0254 m/in ÷ 0,01 m/cm ' + eqv(base.result) + ' cm',
+        ]),
+        step('Hasil akhir', [fmt(feet) + ' ft ' + fmt(inches) + ' in ' + eqv(base.result) + ' cm']),
+        step('Cek masuk akal', ['1 ft ≈ 30 cm, jadi ' + fmt(feet) + ' ft ≈ ' + fmt(feet * 30) + ' cm, ditambah sedikit dari inci ✓']),
+      ],
+    };
+  }
+
+  /* Tekanan = gaya per luas. F dalam N, A dalam m². */
+  function pressureFromForce(F, A) {
+    validateNumber(F);
+    validateNumber(A);
+    if (A <= 0) throw new Error('Luas harus lebih besar dari nol.');
+    const result = validateNumber(F / A);
+    return {
+      result,
+      unit: 'Pa',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: F = ' + fmt(F) + ' N, A = ' + fmt(A) + ' m².', 'Ditanya: tekanan P.']),
+        step('Rumus', ['P = F ÷ A', '1 Pa = 1 N/m²']),
+        step('Substitusi', ['P = ' + fmt(F) + ' N ÷ ' + fmt(A) + ' m²']),
+        step('Hitungan antara', ['P ' + eqv(result) + ' N/m²']),
+        step('Hasil akhir', ['P ' + eqv(result) + ' Pa']),
+        step('Cek masuk akal', ['Untuk gaya positif yang sama, luas lebih kecil menghasilkan tekanan lebih besar. Jika gaya nol, tekanan juga nol.', 'Periksa balik: P × A = ' + fmt(result) + ' × ' + fmt(A) + ' ' + eqv(result * A) + ' N (gaya awal).']),
+      ],
+    };
+  }
+
+  /* Tekanan absolut = gauge + atmosfer, setelah satuan disamakan. */
+  function gaugeToAbsolute(gauge, gaugeUnit, atm, atmUnit, outUnit) {
+    validateNumber(gauge);
+    validateNumber(atm);
+    const U = CATEGORIES.pressure.units;
+    if (!(gaugeUnit in U) || !(atmUnit in U) || !(outUnit in U)) throw new Error('Satuan tidak tersedia untuk kategori ini.');
+    const absPa = gauge * U[gaugeUnit].f + atm * U[atmUnit].f;
+    if (absPa < 0) throw new Error('Tekanan absolut tidak boleh negatif. Vakum penuh adalah 0 absolut.');
+    const g = (gauge * U[gaugeUnit].f) / U[outUnit].f;
+    const a = (atm * U[atmUnit].f) / U[outUnit].f;
+    const result = validateNumber(g + a);
+    const O = U[outUnit].label;
+    return {
+      result,
+      unit: O,
+      gaugeOut: g,
+      atmOut: a,
+      steps: [
+        step('Diketahui dan ditanya', [
+          'Diketahui: tekanan gauge = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ', tekanan atmosfer = ' + fmt(atm) + ' ' + U[atmUnit].label + '.',
+          'Ditanya: tekanan absolut dalam ' + O + '.',
+        ]),
+        step('Rumus', ['P absolut = P gauge + P atmosfer', 'Samakan satuan lebih dulu, baru dijumlahkan.']),
+        step('Substitusi', ['Gauge dalam ' + O + ' = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ' × ' + fmt(U[gaugeUnit].f, 10) + ' Pa/' + U[gaugeUnit].label + ' ÷ ' + fmt(U[outUnit].f, 10) + ' Pa/' + O, 'Atmosfer dalam ' + O + ' = ' + fmt(atm) + ' ' + U[atmUnit].label + ' × ' + fmt(U[atmUnit].f, 10) + ' Pa/' + U[atmUnit].label + ' ÷ ' + fmt(U[outUnit].f, 10) + ' Pa/' + O]),
+        step('Hitungan antara', ['Gauge ' + eqv(g) + ' ' + O, 'Atmosfer ' + eqv(a) + ' ' + O, 'P absolut = ' + fmt(g) + ' + ' + fmt(a) + ' ' + eqv(result) + ' ' + O]),
+        step('Hasil akhir', ['P absolut ' + eqv(result) + ' ' + O]),
+        step('Cek masuk akal', [gauge >= 0 ? 'Tekanan absolut harus lebih besar dari tekanan gauge karena atmosfer ditambahkan ✓' : 'Gauge negatif berarti di bawah tekanan udara luar (vakum parsial); absolut tetap tidak negatif ✓']),
+      ],
+    };
+  }
+
+  /* Hukum Newton II dan gaya berat. */
+  function newtonSteps(mass, accel) {
+    validateNumber(mass);
+    validateNumber(accel);
+    if (mass <= 0) throw new Error('Massa harus lebih besar dari nol.');
+    const result = validateNumber(mass * accel);
+    return {
+      result,
+      unit: 'N',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: m = ' + fmt(mass) + ' kg, a = ' + fmt(accel) + ' m/s².', 'Ditanya: gaya resultan F.']),
+        step('Rumus', ['F = m × a', '1 N = 1 kg·m/s²']),
+        step('Substitusi', ['F = ' + fmt(mass) + ' kg × ' + fmt(accel) + ' m/s²']),
+        step('Hitungan antara', ['F ' + eqv(result) + ' kg·m/s²']),
+        step('Hasil akhir', ['F ' + eqv(result) + ' N']),
+        step('Cek masuk akal', ['Massa positif, jadi tanda gaya resultan mengikuti tanda percepatan. Pada massa tetap, besar gaya sebanding dengan besar percepatan.']),
+      ],
+    };
+  }
+
+  function accelerationSteps(force, mass) {
+    validateNumber(force);
+    validateNumber(mass);
+    if (mass <= 0) throw new Error('Massa harus lebih besar dari nol.');
+    const result = validateNumber(force / mass);
+    return {
+      result,
+      unit: 'm/s²',
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: F = ' + fmt(force) + ' N, m = ' + fmt(mass) + ' kg.', 'Ditanya: percepatan a.']),
+        step('Rumus', ['a = F ÷ m (dari F = m × a)']),
+        step('Substitusi', ['a = ' + fmt(force) + ' N ÷ ' + fmt(mass) + ' kg']),
+        step('Hitungan antara', ['a ' + eqv(result) + ' m/s²']),
+        step('Hasil akhir', ['a ' + eqv(result) + ' m/s²']),
+        step('Cek masuk akal', ['Massa lebih besar membuat percepatan lebih kecil untuk gaya yang sama ✓']),
+      ],
+    };
+  }
+
+  function weightSteps(mass, g, where) {
+    validateNumber(mass);
+    validateNumber(g);
+    if (mass <= 0 || g <= 0) throw new Error('Massa dan percepatan gravitasi harus lebih besar dari nol.');
+    const result = validateNumber(mass * g);
+    const kgf = result / CATEGORIES.force.units.kgf.f;
+    return {
+      result,
+      unit: 'N',
+      kgf,
+      steps: [
+        step('Diketahui dan ditanya', ['Diketahui: m = ' + fmt(mass) + ' kg, g = ' + fmt(g) + ' m/s²' + (where ? ' (' + where + ')' : '') + '.', 'Ditanya: gaya berat W.']),
+        step('Rumus', ['W = m × g', 'g adalah percepatan gravitasi di lokasi itu; nilainya harus dinyatakan.']),
+        step('Substitusi', ['W = ' + fmt(mass) + ' kg × ' + fmt(g) + ' m/s²']),
+        step('Hitungan antara', ['W ' + eqv(result) + ' N', 'Dalam kgf: ' + fmt(result) + ' N ÷ 9,80665 N/kgf ' + eqv(kgf) + ' kgf']),
+        step('Hasil akhir', ['W ' + eqv(result) + ' N, sama dengan ' + fmt(kgf) + ' kgf']),
+        step('Cek masuk akal', ['Massa tetap ' + fmt(mass) + ' kg; hanya gaya beratnya yang mengikuti g ✓']),
+      ],
+    };
+  }
+
+  /* ---------- Pemeriksaan jawaban numerik ---------- */
+  function checkNumeric(user, expected, dp) {
+    const diff = Math.abs(user - expected);
+    const tol = Math.max(1e-12, 1e-12 * Math.abs(expected));
+    const ok = dp === 'exact' ? diff <= tol
+      : diff <= tol || Number(user.toFixed(dp)) === Number(expected.toFixed(dp));
+    return { ok, diff };
+  }
+
+  function label(cat, unit) {
+    if (cat === 'temperature') return TEMP_UNITS[unit].label;
+    return CATEGORIES[cat].units[unit].label;
+  }
+
+  const api = {
+    CATEGORIES, TEMP_UNITS, DELTA_PER_C, ABS_ZERO_C,
+    fmt, isRounded, eqv, shown, parseNumber, validateNumber,
+    convertLinear, convertTemperature, convertDelta, toCelsius, fromCelsius,
+    convertSteps, temperatureSteps, deltaSteps, powerSteps, feetInchesSteps,
+    pressureFromForce, gaugeToAbsolute, newtonSteps, accelerationSteps, weightSteps,
+    checkNumeric, label, step, TEMP_TO_C, TEMP_FROM_C,
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  return api;
+})();
+</script>
+
+<script id="quizdata">
+/* Bank soal. Jawaban hitungan dihasilkan oleh Core, bukan diketik manual. */
+const QUIZ = (function () {
+  'use strict';
+  const sets = {};
+
+  function mc(id, topic, kind, text, options, correct, hint, why, wrong) {
+    return { id, topic, kind, type: 'mc', text, options, correct, hint, why, wrong: wrong || {} };
+  }
+  function calc(id, topic, kind, text, unit, dp, solve, hint, traps) {
+    return { id, topic, kind, type: 'num', text, unit, dp, solve, hint, traps: traps || [] };
+  }
+  function conv(id, topic, kind, cat, value, from, to, dp, hint, traps) {
+    const text = 'Ubah ' + Core.fmt(value) + ' ' + Core.label(cat, from) + ' ke ' + Core.label(cat, to) + '.';
+    const solve = () => (cat === 'temperature' ? Core.temperatureSteps(value, from, to) : Core.convertSteps(cat, value, from, to));
+    return calc(id, topic, kind, text, Core.label(cat, to), dp, solve, hint, traps);
+  }
+
+  sets.tekanan = [
+    mc('tekanan-1', 'tekanan', 'konsep', 'Sebuah balok menekan lantai dengan gaya tetap. Luas bidang yang menyentuh lantai diperkecil. Apa yang terjadi pada tekanannya?',
+      ['Naik, karena P = F ÷ A dan A mengecil', 'Turun, karena gayanya terbagi lebih sedikit', 'Tetap, karena gayanya tidak berubah', 'Tidak bisa ditentukan'], 0,
+      'Tulis P = F ÷ A. Apa yang terjadi pada hasil bagi bila penyebutnya mengecil?',
+      'P = F ÷ A. F tetap dan A mengecil, jadi hasil bagi membesar. Itu sebabnya pisau tajam dan jarum menembus dengan mudah.',
+      { 1: 'Gaya tidak terbagi lebih sedikit. Justru gaya yang sama terkonsentrasi pada luas yang lebih kecil.', 2: 'Gaya memang tetap, tetapi tekanan adalah gaya per luas, dan luasnya berubah.' }),
+    mc('tekanan-2', 'tekanan', 'konsep', 'Satuan 1 pascal (Pa) sama dengan...',
+      ['1 N/m²', '1 N·m', '1 kg/m²', '1 N/cm²'], 0,
+      'Tekanan = gaya per luas. Gaya dalam N, luas dalam m².',
+      '1 Pa = 1 N/m². N·m adalah satuan energi (joule), kg/m² adalah massa per luas, dan 1 N/cm² sama dengan 10.000 Pa, bukan 1 Pa.',
+      { 1: 'N·m adalah newton dikali meter, yaitu energi (joule), bukan tekanan.' }),
+    mc('tekanan-3', 'tekanan', 'prediksi', 'Kamu akan mengubah 2 atm ke psi. Tanpa menghitung, angkanya akan...',
+      ['Membesar, karena 1 psi jauh lebih kecil dari 1 atm', 'Mengecil, karena 1 psi jauh lebih kecil dari 1 atm', 'Tetap sama, karena keduanya satuan tekanan'], 0,
+      'Bandingkan faktor: 1 atm = 101.325 Pa, 1 psi = 6.894,757 Pa. Mana yang lebih kecil?',
+      'Satuan yang lebih kecil membutuhkan angka lebih besar untuk besaran yang sama. 1 psi hanya sekitar 6.895 Pa sedangkan 1 atm 101.325 Pa, jadi 2 atm menjadi sekitar 29 psi.',
+      { 1: 'Terbalik. Kalau satuan tujuan lebih kecil, angkanya harus lebih besar.', 2: 'Satuannya beda ukuran, jadi angkanya ikut berubah.' }),
+    calc('tekanan-4', 'tekanan', 'hitungan', 'Balok menekan lantai dengan gaya 500 N pada luas 0,25 m². Hitung tekanannya.', 'Pa', 'exact',
+      () => Core.pressureFromForce(500, 0.25), 'P = F ÷ A. Satuan hasil: N/m² = Pa.',
+      [{ value: 125, msg: 'Itu 500 × 0,25. Tekanan adalah gaya DIBAGI luas, bukan dikali.' }]),
+    conv('tekanan-5', 'tekanan', 'hitungan', 'pressure', 250, 'kPa', 'bar', 'exact', 'Ke Pa dulu (× 1.000), lalu ke bar (÷ 100.000).'),
+    conv('tekanan-6', 'tekanan', 'hitungan', 'pressure', 60, 'psi', 'bar', 3, 'Ke Pa dulu (× 6.894,757), lalu ke bar (÷ 100.000).'),
+    conv('tekanan-7', 'tekanan', 'hitungan', 'pressure', 3, 'atm', 'kPa', 3, 'Ke Pa dulu (× 101.325), lalu ke kPa (÷ 1.000).'),
+    mc('tekanan-8', 'tekanan', 'jebakan', 'Mana pernyataan yang benar tentang 1 atm dan 1 bar?',
+      ['Keduanya persis sama', '1 atm sedikit lebih besar dari 1 bar (sekitar 1,3%)', '1 bar sedikit lebih besar dari 1 atm', '1 atm sekitar 10 kali 1 bar'], 1,
+      'Bandingkan 101.325 Pa dengan 100.000 Pa.',
+      '1 atm = 101.325 Pa dan 1 bar = 100.000 Pa, jadi 1 atm = 1,01325 bar. Dekat, tetapi tidak sama.',
+      { 0: 'Dekat sekali, tetapi bukan persis sama: 101.325 Pa berbanding 100.000 Pa.', 2: 'Terbalik: yang lebih besar adalah atm.' }),
+    mc('tekanan-9', 'tekanan', 'jebakan', 'Pompa ban menunjukkan 32 psi (gauge). Tekanan absolut udara di dalam ban kira-kira...',
+      ['Kurang dari 32 psi', 'Tepat 32 psi', 'Sekitar 46,7 psi (32 + 14,7)', 'Sekitar 470 psi (32 × 14,7)'], 2,
+      'Absolut = gauge + atmosfer. Atmosfer sekitar 14,7 psi.',
+      'Gauge mengukur kelebihan di atas tekanan udara luar. Absolut = gauge + atmosfer = 32 + 14,7 ≈ 46,7 psi.',
+      { 1: 'Itu gauge. Absolut harus menambahkan atmosfer.', 3: 'Atmosfer ditambahkan, bukan dikalikan.' }),
+    calc('tekanan-10', 'tekanan', 'gabungan', 'Ban menunjukkan 32 psi (gauge) dan tekanan atmosfer 1 atm. Berapa tekanan absolut ban?', 'bar', 2,
+      () => Core.gaugeToAbsolute(32, 'psi', 1, 'atm', 'bar'), 'Ubah gauge dan atmosfer ke bar dulu, baru jumlahkan.',
+      [
+        { value: 2.206, dp: 2, msg: 'Itu baru tekanan gauge dalam bar. Atmosfer belum ditambahkan.' },
+        { value: 3.307, dp: 2, msg: 'Cek 1 atm dalam bar: 101.325 ÷ 100.000 = 1,01325, bukan 1,101.' },
+      ]),
+  ];
+
+  sets.gaya = [
+    mc('gaya-1', 'gaya', 'konsep', 'Massa sebuah benda tetap. Gaya resultan yang bekerja padanya dijadikan dua kali lipat. Percepatannya...',
+      ['Menjadi dua kali lipat', 'Menjadi setengahnya', 'Tetap', 'Menjadi empat kali lipat'], 0,
+      'Dari F = m × a, a = F ÷ m. Apa yang terjadi bila F dilipatduakan dan m tetap?',
+      'a = F ÷ m. Dengan m tetap, a sebanding dengan F, jadi gaya dua kali lipat membuat percepatan dua kali lipat.',
+      { 1: 'Itu terjadi bila massanya yang dilipatduakan, bukan gayanya.' }),
+    mc('gaya-2', 'gaya', 'konsep', 'Gaya resultan yang sama bekerja pada benda bermassa 2 kali lebih besar. Percepatannya...',
+      ['Dua kali lipat', 'Setengahnya', 'Tetap', 'Nol'], 1,
+      'a = F ÷ m. Massa di penyebut.',
+      'a = F ÷ m. Massa lebih besar berarti benda lebih sulit dipercepat, sehingga percepatannya menjadi setengahnya.',
+      { 0: 'Terbalik. Benda yang lebih berat lebih sulit dipercepat oleh gaya yang sama.' }),
+    mc('gaya-3', 'gaya', 'prediksi', 'Kamu akan mengubah 10 kN ke lbf. Tanpa menghitung, angkanya akan...',
+      ['Membesar, karena 1 lbf jauh lebih kecil dari 1 kN', 'Mengecil, karena 1 lbf jauh lebih kecil dari 1 kN', 'Tetap sama'], 0,
+      '1 kN = 1.000 N dan 1 lbf = 4,448 N. Mana yang lebih kecil?',
+      'lbf adalah satuan yang jauh lebih kecil, jadi angkanya membesar: 10 kN menjadi sekitar 2.248 lbf.',
+      { 1: 'Terbalik. Satuan tujuan lebih kecil berarti angkanya lebih besar.' }),
+    calc('gaya-4', 'gaya', 'hitungan', 'Benda bermassa 2 kg mengalami percepatan 3 m/s². Berapa gaya resultannya?', 'N', 'exact',
+      () => Core.newtonSteps(2, 3), 'F = m × a.',
+      [{ value: 1.5, msg: 'Itu 3 ÷ 2. Rumusnya F = m × a, jadi massa dikali percepatan.' }]),
+    conv('gaya-5', 'gaya', 'hitungan', 'force', 5, 'kgf', 'N', 2, 'Tujuannya sudah newton: kali faktor kgf (9,80665).'),
+    conv('gaya-6', 'gaya', 'hitungan', 'force', 2, 'kN', 'kgf', 1, 'Ke N dulu (× 1.000), lalu ke kgf (÷ 9,80665).'),
+    conv('gaya-7', 'gaya', 'hitungan', 'force', 500, 'lbf', 'kN', 3, 'Ke N dulu (× 4,4482216), lalu ke kN (÷ 1.000).'),
+    mc('gaya-8', 'gaya', 'jebakan', 'Temanmu berkata "1 kg sama dengan 9,8 N". Tanggapan yang paling tepat?',
+      ['Benar, itu konversi biasa', 'Kurang tepat: kg adalah massa; yang setara 9,8 N adalah gaya berat massa 1 kg (1 kgf)', 'Salah, 1 kg = 1 N', 'Salah, 1 kg = 100 N'], 1,
+      'N, kN, kgf, lbf adalah satuan gaya di materi inti. kg menyatakan besaran apa?',
+      'kg adalah satuan massa, N adalah satuan gaya, sehingga tidak ada konversi langsung. Gaya berat massa 1 kg di gravitasi standar adalah 9,80665 N, itulah 1 kgf.',
+      { 0: 'Massa dan gaya adalah besaran berbeda; konversi langsung tidak ada.' }),
+    mc('gaya-9', 'gaya', 'jebakan', 'Astronot bermassa 70 kg pergi ke Bulan (g ≈ 1,62 m/s²). Apa yang terjadi?',
+      ['Massanya tetap 70 kg, gaya beratnya turun', 'Massanya turun, gaya beratnya tetap', 'Massa dan gaya beratnya sama-sama turun', 'Massa dan gaya beratnya sama-sama tetap'], 0,
+      'W = m × g. Mana yang berubah ketika g berubah?',
+      'Massa adalah banyaknya materi dan tidak berubah. Gaya berat W = m × g mengikuti g, sehingga turun di Bulan.',
+      { 2: 'Massa adalah sifat benda dan tidak ikut turun.', 3: 'Gaya berat bergantung pada g, jadi berubah.' }),
+    calc('gaya-10', 'gaya', 'gabungan', 'Massa 70 kg berada di Bulan (g ≈ 1,62 m/s², pendekatan). Berapa gaya beratnya dalam kgf?', 'kgf', 2,
+      () => { const sol = Core.weightSteps(70, 1.62, 'Bulan'); return { result: sol.kgf, unit: 'kgf', steps: sol.steps }; },
+      'Hitung W = m × g dalam N, lalu bagi 9,80665 untuk mendapat kgf.',
+      [
+        { value: 113.4, dp: 1, msg: 'Itu gaya beratnya dalam newton. Soal meminta kgf: bagi dengan 9,80665.' },
+        { value: 70, dp: 1, msg: '70 adalah massa dalam kg. Gaya berat di Bulan lebih kecil karena g-nya lebih kecil.' },
+      ]),
+  ];
+
+  sets.panjang = [
+    mc('panjang-1', 'panjang', 'konsep', 'Sebuah meja panjangnya 1 m. Ketika ditulis menjadi 100 cm, apa yang berubah?', ['Hanya angka dan satuannya', 'Mejanya menjadi lebih panjang', 'Panjang fisiknya berubah'], 0, 'Apakah mengganti penggaris mengubah meja?', 'Besaran panjangnya tetap. Satuan yang lebih kecil membutuhkan jumlah unit yang lebih banyak.'),
+    mc('panjang-2', 'panjang', 'konsep', 'Faktor cm pada tabel dengan perantara meter adalah...', ['100', '0,01', '1.000'], 1, 'Tanyakan: 1 cm sama dengan berapa meter?', '1 cm = 0,01 m, sehingga faktor cm adalah 0,01. Angka 100 menjawab pertanyaan sebaliknya: berapa cm dalam 1 m.'),
+    mc('panjang-3', 'panjang', 'prediksi', '5 ft diubah ke cm. Angkanya akan...', ['Membesar', 'Mengecil', 'Tetap'], 0, '1 ft = 30,48 cm. Mana satuan yang lebih kecil?', 'cm lebih kecil dari ft. Untuk panjang positif yang sama, jumlah cm lebih banyak daripada jumlah ft.'),
+    conv('panjang-4', 'panjang', 'hitungan', 'length', 250, 'cm', 'm', 'exact', 'Kali 0,01 untuk mendapat meter.'),
+    conv('panjang-5', 'panjang', 'hitungan', 'length', 5, 'ft', 'cm', 'exact', 'Ke m: × 0,3048. Dari m ke cm: ÷ 0,01.'),
+    conv('panjang-6', 'panjang', 'hitungan', 'length', 100, 'mi', 'km', 2, 'Ke m: × 1.609,344. Lalu ÷ 1.000 untuk km.'),
+    conv('panjang-7', 'panjang', 'hitungan', 'length', 50, 'mm', 'in', 3, 'Ke m dulu, lalu bagi 0,0254.'),
+    calc('panjang-8', 'panjang', 'jebakan', 'Ubah luas 2 m² ke cm².', 'cm²', 'exact', () => Core.powerSteps(2, 'm', 'cm', 2), '1 m = 100 cm. Untuk luas, faktor 100 dipakai dua kali.', [{ value: 200, msg: 'Itu memakai faktor panjang sekali. Luas butuh 100 × 100.' }]),
+    mc('panjang-9', 'panjang', 'jebakan', 'Tinggi 5 ft 10 in sama dengan...', ['5,10 ft', '70 in', '60 in'], 1, 'Ada 12 in dalam 1 ft. Jumlahkan inci kedua komponennya.', '5 × 12 + 10 = 70 in. Angka 10 menyatakan inci tambahan, bukan pecahan desimal kaki.'),
+    calc('panjang-10', 'panjang', 'gabungan', 'Tinggi seseorang 5 ft 10 in. Berapa cm?', 'cm', 'exact', () => Core.feetInchesSteps(5, 10), 'Jumlahkan inci: 5 × 12 + 10, lalu kali 2,54.'),
+  ];
+
+  sets.suhu = [
+    mc('suhu-1', 'suhu', 'konsep', 'Mengapa °C ke °F perlu +32?', ['Karena titik nol kedua skala berbeda', 'Karena Fahrenheit selalu 32 kali Celsius', 'Karena Kelvin memiliki tanda derajat'], 0, '0 °C sama dengan 32 °F.', 'Perkalian mengubah ukuran interval; +32 menyesuaikan titik nol. Karena 0 dikali berapa pun tetap 0, perkalian saja tidak dapat menghasilkan 32.'),
+    mc('suhu-2', 'suhu', 'konsep', 'Penulisan kelvin yang benar adalah...', ['273,15 °K', '273,15 K', '273,15 k'], 1, 'Kelvin tidak memakai tanda derajat.', 'Simbol kelvin adalah K, dengan huruf besar tanpa tanda derajat.'),
+    mc('suhu-3', 'suhu', 'prediksi', 'Pada rentang suhu yang sama, 100 interval °C setara berapa interval °F?', ['100', '180', '32'], 1, 'Bandingkan 0–100 °C dengan 32–212 °F.', '212 − 32 = 180 interval °F. Rasionya 180/100 = 9/5 = 1,8.'),
+    conv('suhu-4', 'suhu', 'hitungan', 'temperature', 25, 'C', 'F', 'exact', 'Kali 9/5, lalu tambah 32.'),
+    conv('suhu-5', 'suhu', 'hitungan', 'temperature', 98.6, 'F', 'C', 2, 'Kurangi 32 dahulu, baru kali 5/9.'),
+    conv('suhu-6', 'suhu', 'hitungan', 'temperature', 0, 'C', 'K', 'exact', 'Celsius ke kelvin: tambah 273,15.'),
+    conv('suhu-7', 'suhu', 'hitungan', 'temperature', 0, 'K', 'F', 2, 'Ke Celsius dahulu: −273,15 °C. Lalu ke Fahrenheit.'),
+    calc('suhu-8', 'suhu', 'jebakan', 'Suhu naik 10 °C. Berapa kenaikannya dalam °F?', '°F', 'exact', () => Core.deltaSteps(10, 'C', 'F'), 'Ini selisih: kali 9/5, tanpa +32.', [{ value: 50, msg: '50 °F adalah titik suhu 10 °C. Kenaikan hanya memakai rasio: 10 × 1,8.' }]),
+    mc('suhu-9', 'suhu', 'jebakan', 'Mana input titik suhu yang berada di bawah nol mutlak?', ['−10 °C', '0 K', '−300 °C'], 2, 'Nol mutlak = −273,15 °C.', '−300 °C lebih rendah dari −273,15 °C. −10 °C adalah suhu biasa di bawah titik beku; 0 K tepat di batas nol mutlak.'),
+    conv('suhu-10', 'suhu', 'gabungan', 'temperature', 300, 'K', 'F', 2, '300 − 273,15 = 26,85 °C. Lalu kali 9/5 dan tambah 32.'),
+  ];
+
+  // ID terpisah: jawaban kuis gabungan tidak mengubah skor kuis modul.
+  sets.gabungan = ['tekanan', 'gaya', 'panjang', 'suhu'].flatMap((topic) =>
+    [0, 5, 9].map((index) => Object.assign({}, sets[topic][index], { id: 'gabungan-' + topic + '-' + index })));
+
+  return sets;})();
+</script>
+
+<script id="app">
+'use strict';
+
+/* ---------- Pembantu DOM ---------- */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v === null || v === undefined) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'html') el.innerHTML = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  appendKids(el, kids);
+  return el;
+}
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function s(tag, attrs, ...kids) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v === null || v === undefined) continue;
+    el.setAttribute(k, v);
+  }
+  appendKids(el, kids);
+  return el;
+}
+function appendKids(el, kids) {
+  for (const kid of kids.flat(Infinity)) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+}
+function announce(text) {
+  const live = document.getElementById('live');
+  live.textContent = '';
+  setTimeout(() => { live.textContent = text; }, 30);
+}
+
+/* ---------- Komponen bersama ---------- */
+let uidCounter = 0;
+const uid = (prefix) => (prefix || 'id') + '-' + ++uidCounter;
+const toInputText = (n) => String(n).replace('.', ',');
+const CAT_LABEL = { pressure: 'Tekanan', force: 'Gaya', length: 'Panjang', temperature: 'Suhu' };
+
+function unitsOf(cat) {
+  return cat === 'temperature' ? Core.TEMP_UNITS : Core.CATEGORIES[cat].units;
+}
+
+/* Kolom angka dengan pesan kesalahan di dekatnya. */
+function numberField(o) {
+  const id = o.id || uid('nf');
+  const input = h('input', {
+    type: 'text', id, inputmode: 'decimal', autocomplete: 'off', spellcheck: 'false',
+    value: o.value === undefined ? '' : toInputText(o.value),
+  });
+  const err = h('div', { class: 'err', id: id + '-err', 'aria-live': 'polite' });
+  input.setAttribute('aria-describedby', id + '-err' + (o.hint ? ' ' + id + '-hint' : ''));
+  const el = h('div', { class: 'field' },
+    h('label', { for: id }, o.label),
+    input,
+    o.hint ? h('div', { class: 'hint', id: id + '-hint' }, o.hint) : null,
+    err);
+  function read() {
+    const p = Core.parseNumber(input.value);
+    if (!p.ok) return p;
+    if (o.positive && p.value <= 0) return { ok: false, error: 'Nilai harus lebih besar dari nol.' };
+    if (o.min !== undefined && p.value < o.min) return { ok: false, error: o.minMsg || 'Nilai minimal ' + Core.fmt(o.min) + '.' };
+    if (o.max !== undefined && p.value > o.max) return { ok: false, error: 'Nilai maksimal ' + Core.fmt(o.max) + '.' };
+    return p;
+  }
+  function validate() {
+    const r = read();
+    input.setAttribute('aria-invalid', r.ok ? 'false' : 'true');
+    err.textContent = r.ok ? '' : r.error;
+    return r;
+  }
+  input.addEventListener('input', () => {
+    const r = validate();
+    if (o.onChange) o.onChange(r);
+  });
+  return {
+    el, input, read, validate,
+    setValue(n) { input.value = toInputText(n); validate(); },
+  };
+}
+
+/* Slider dengan kolom angka yang saling terhubung. */
+function sliderField(o) {
+  const range = h('input', { type: 'range', min: o.min, max: o.max, step: o.step, value: o.value });
+  range.setAttribute('aria-label', o.label + ', geser');
+  const nf = numberField({
+    label: o.label + (o.unit ? ' (' + o.unit + ')' : ''), value: o.value, hint: o.hint,
+    positive: o.positive, min: o.fieldMin, max: o.fieldMax, minMsg: o.minMsg,
+    onChange(r) {
+      if (r.ok) range.value = Math.min(Math.max(r.value, o.min), o.max);
+      if (o.onChange) o.onChange(r);
+    },
+  });
+  range.addEventListener('input', () => {
+    nf.setValue(Number(range.value));
+    if (o.onChange) o.onChange({ ok: true, value: Number(range.value) });
+  });
+  return {
+    el: h('div', { class: 'slider-field' }, nf.el, range),
+    read: nf.read,
+    setValue(n) { nf.setValue(n); range.value = Math.min(Math.max(n, o.min), o.max); },
+  };
+}
+
+/* Pilihan satuan; satuan lanjutan disembunyikan kecuali diminta. */
+function unitSelect(o) {
+  const id = uid('us');
+  const select = h('select', { id });
+  function fill(advanced) {
+    const previous = select.value || o.value;
+    select.replaceChildren();
+    const units = unitsOf(o.cat);
+    for (const key of Object.keys(units)) {
+      if (units[key].adv && !advanced && key !== previous) continue;
+      select.append(h('option', { value: key }, units[key].label + ' — ' + units[key].name));
+    }
+    if ([...select.options].some((opt) => opt.value === previous)) select.value = previous;
+  }
+  fill(!!o.advanced);
+  select.addEventListener('change', () => { if (o.onChange) o.onChange(select.value); });
+  return {
+    el: h('div', { class: 'field' }, h('label', { for: id }, o.label), select),
+    select, fill,
+    get value() { return select.value; },
+    set value(v) { select.value = v; },
+  };
+}
+
+/* Daftar langkah hitung dari data solusi: { steps: [{title, lines}] }. */
+function stepsList(steps) {
+  return h('ol', { class: 'steps' }, steps.map((st) =>
+    h('li', {}, h('div', { class: 'st-title' }, st.title), st.lines.map((line) => h('div', { class: 'fl' }, line)))));
+}
+
+/* Langkah dibuka satu per satu. getSolution() mengembalikan { steps, ... }. */
+function stepper(getSolution, o) {
+  o = o || {};
+  const holder = h('div');
+  const status = h('div', { class: 'hint', 'aria-live': 'polite' });
+  let shown = 1;
+  let total = 1;
+  const next = h('button', { class: 'btn', type: 'button' }, 'Langkah berikutnya');
+  const all = h('button', { class: 'btn secondary', type: 'button' }, 'Tampilkan semua');
+  const again = h('button', { class: 'btn secondary', type: 'button' }, 'Ulangi');
+  function draw(announceTitle) {
+    const sol = getSolution();
+    total = sol.steps.length;
+    shown = Math.min(Math.max(shown, 1), total);
+    holder.replaceChildren(stepsList(sol.steps.slice(0, shown)));
+    next.disabled = shown >= total;
+    all.disabled = shown >= total;
+    status.textContent = 'Langkah ' + shown + ' dari ' + total + '.';
+    if (announceTitle) announce('Langkah ' + shown + ': ' + sol.steps[shown - 1].title);
+    if (o.onShown) o.onShown(shown, total);
+  }
+  next.addEventListener('click', () => { shown += 1; draw(true); });
+  all.addEventListener('click', () => { shown = total; draw(true); });
+  again.addEventListener('click', () => { shown = 1; draw(false); });
+  draw(false);
+  return h('div', { class: 'stepper' }, holder, status, h('div', { class: 'btn-row' }, next, all, again));
+}
+
+/* Peta perantara: satuan asal -> perantara -> satuan tujuan (tersusun ke bawah). */
+function hubSvg(info) {
+  const svg = s('svg', { viewBox: '0 0 430 296', role: 'img', 'aria-label': info.aria });
+  svg.append(s('title', {}, 'Peta konversi lewat satuan perantara'), s('desc', {}, info.aria));
+  svg.append(s('defs', {}, s('marker', { id: 'hubArrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, s('path', { d: 'M0 0L10 5L0 10z', class: 'acf' }))));
+  const boxes = [
+    { y: 22, head: 'Satuan asal', main: info.from, note: info.fromNote, mid: false },
+    { y: 122, head: 'Satuan perantara', main: info.base, note: info.baseNote, mid: true },
+    { y: 222, head: 'Satuan tujuan', main: info.to, note: info.toNote, mid: false },
+  ];
+  for (const b of boxes) {
+    svg.append(
+      s('text', { x: 230, y: b.y + 32, class: 'ts' }, b.head),
+      s('rect', { x: 10, y: b.y, width: 200, height: 64, rx: 10, class: b.mid ? 'tint' : 'soft' }),
+      s('text', { x: 110, y: b.y + 28, 'text-anchor': 'middle', class: 'tb' }, b.main),
+      s('text', { x: 110, y: b.y + 50, 'text-anchor': 'middle', class: 'ts' }, b.note));
+  }
+  const arrows = [{ y1: 88, y2: 120, small: 'ke perantara', text: info.step1 }, { y1: 188, y2: 220, small: 'ke tujuan', text: info.step2 }];
+  for (const a of arrows) {
+    svg.append(
+      s('line', { x1: 110, y1: a.y1, x2: 110, y2: a.y2, class: 'ac', 'marker-end': 'url(#hubArrow)' }),
+      s('text', { x: 132, y: a.y1 + 12, class: 'ts' }, a.small),
+      s('text', { x: 132, y: a.y1 + 30, class: 'tm' }, a.text));
+  }
+  return svg;
+}
+function hubInfo(cat, from, to) {
+  if (cat === 'temperature') {
+    const T = Core.TEMP_UNITS;
+    return {
+      from: T[from].label, to: T[to].label, base: '°C',
+      fromNote: 'beku air: ' + Core.fmt(T[from].freeze) + ' ' + T[from].label,
+      baseNote: 'beku air: 0 °C',
+      toNote: 'beku air: ' + Core.fmt(T[to].freeze) + ' ' + T[to].label,
+      step1: Core.TEMP_TO_C[from].replace('°C = ', ''),
+      step2: Core.TEMP_FROM_C[to].replace(/^[^=]*= /, ''),
+      aria: 'Suhu ' + T[from].label + ' diubah ke derajat Celsius, lalu ke ' + T[to].label + '.',
+    };
+  }
+  const c = Core.CATEGORIES[cat];
+  const A = c.units[from];
+  const B = c.units[to];
+  return {
+    from: A.label, to: B.label, base: c.base,
+    fromNote: '1 ' + A.label + ' = ' + Core.fmt(A.f, 6) + ' ' + c.base,
+    baseNote: 'satuan dasar',
+    toNote: '1 ' + B.label + ' = ' + Core.fmt(B.f, 6) + ' ' + c.base,
+    step1: '× ' + Core.fmt(A.f, 6),
+    step2: '÷ ' + Core.fmt(B.f, 6),
+    aria: A.label + ' dikali ' + Core.fmt(A.f, 6) + ' menjadi ' + c.base + ', lalu dibagi ' + Core.fmt(B.f, 6) + ' menjadi ' + B.label + '.',
+  };
+}
+
+/* Konverter bebas dengan peta perantara dan semua langkah hitung. */
+function Converter(cat, o) {
+  o = o || {};
+  const defaults = {
+    pressure: ['atm', 'psi'], force: ['kgf', 'N'], length: ['ft', 'cm'], temperature: ['C', 'F'],
+  }[cat];
+  const root = h('div', { class: 'split conv' });
+  const value = numberField({
+    label: 'Nilai', value: o.value === undefined ? 1 : o.value,
+    hint: 'Contoh: 12 atau 1,5 (tanpa pemisah ribuan)', onChange: render,
+  });
+  const from = unitSelect({ label: 'Dari', cat, value: o.from || defaults[0], advanced: o.advanced, onChange: render });
+  const to = unitSelect({ label: 'Ke', cat, value: o.to || defaults[1], advanced: o.advanced, onChange: render });
+  const swap = h('button', { class: 'btn secondary', type: 'button' }, 'Tukar satuan');
+  const advBox = h('input', { type: 'checkbox', id: uid('adv'), checked: !!o.advanced });
+  const advLabel = Object.values(unitsOf(cat)).filter((u) => u.adv).map((u) => u.label).join(', ');
+  const out = h('div', { 'aria-live': 'polite' });
+  const hub = h('figure', { class: 'fig' });
+  const stepsHolder = h('div');
+  swap.addEventListener('click', () => {
+    const a = from.value;
+    from.value = to.value;
+    to.value = a;
+    render();
+  });
+  advBox.addEventListener('change', () => { from.fill(advBox.checked); to.fill(advBox.checked); render(); });
+  function render() {
+    const v = value.read();
+    hub.replaceChildren(hubSvg(hubInfo(cat, from.value, to.value)));
+    if (!v.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, v.error));
+      stepsHolder.replaceChildren();
+      return;
+    }
+    try {
+      const sol = cat === 'temperature'
+        ? Core.temperatureSteps(v.value, from.value, to.value)
+        : Core.convertSteps(cat, v.value, from.value, to.value);
+      out.replaceChildren(h('div', { class: 'result' },
+        Core.fmt(v.value) + ' ' + Core.label(cat, from.value) + ' ' + Core.eqv(sol.result) + ' ',
+        h('span', { class: 'big' }, sol.unit)));
+      stepsHolder.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsHolder.replaceChildren();
+    }
+  }
+  root.append(
+    h('div', { class: 'controls' },
+      h('div', { class: 'row' }, value.el, from.el, to.el),
+      h('div', { class: 'btn-row' }, swap),
+      h('label', { class: 'check', for: advBox.id }, advBox, 'Sertakan satuan lanjutan (' + advLabel + ')'),
+      out),
+    h('div', { class: 'visual' }, hub),
+    h('div', { class: 'steps-area' }, stepsHolder));
+  render();
+  return root;
+}
+
+/* Penanda skala dengan langkah yang enak dibaca (1, 2, 5 x 10^k). */
+function niceStep(range, maxTicks) {
+  if (!(range > 0)) return 1;
+  const raw = range / maxTicks;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 5, 10]) if (m * pow >= raw) return m * pow;
+  return 10 * pow;
+}
+function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(x)));
+  for (const m of [1, 2, 5, 10]) if (m * pow >= x) return m * pow;
+  return 10 * pow;
+}
+
+/* Satu bagian halaman dengan judul. */
+function section(title, ...kids) {
+  return h('section', { class: 'section', 'aria-label': title }, h('h2', {}, title), kids);
+}
+
+/* ---------- Navigasi ---------- */
+const ROUTES = [
+  { id: 'mulai', label: 'Mulai', topic: 'mulai' },
+  { id: 'tekanan', label: 'Tekanan', topic: 'tekanan' },
+  { id: 'gaya', label: 'Gaya', topic: 'gaya' },
+  { id: 'panjang', label: 'Panjang', topic: 'panjang' },
+  { id: 'suhu', label: 'Suhu', topic: 'suhu' },
+  { id: 'kuis', label: 'Kuis gabungan', topic: 'mulai' },
+  { id: 'rumus', label: 'Rumus', topic: 'mulai' },
+];
+const PAGES = {};
+
+/* ---------- Halaman Mulai ---------- */
+function oneQuantityFigure() {
+  const U = Core.CATEGORIES.length.units;
+  const keys = ['m', 'cm', 'mm', 'in', 'ft'];
+  let unit = 'cm';
+  const fig = h('figure', { class: 'fig' });
+  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Pilih skala pengukur' });
+  const caption = h('figcaption');
+  const buttons = keys.map((k) => {
+    const b = h('button', { type: 'button', onclick() { unit = k; draw(); } }, 'Skala ' + U[k].label);
+    tabs.append(b);
+    return b;
+  });
+  function draw() {
+    const X = 1 / U[unit].f;
+    const label = U[unit].label;
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', keys[i] === unit ? 'true' : 'false'));
+    const x0 = 20;
+    const x1 = 440;
+    const svg = s('svg', {
+      viewBox: '0 0 460 150', role: 'img',
+      'aria-label': 'Satu batang yang panjangnya 1 meter diukur dengan skala ' + label + ': panjangnya ' + Core.fmt(X) + ' ' + label + '.',
+    });
+    svg.append(
+      s('text', { x: x0, y: 22, class: 't' }, 'Batang yang sama (1 m)'),
+      s('rect', { x: x0, y: 30, width: x1 - x0, height: 26, rx: 4, class: 'tint' }),
+      s('line', { x1: x0, y1: 82, x2: x1, y2: 82, class: 'ln' }));
+    const step = niceStep(X, 8);
+    const count = Math.floor(X / step + 1e-9);
+    for (let k = 0; k <= count; k += 1) {
+      const t = k * step;
+      const x = x0 + (t / X) * (x1 - x0);
+      svg.append(s('line', { x1: x, y1: 82, x2: x, y2: 92, class: 'ln' }), s('text', { x, y: 108, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(t, 4)));
+    }
+    if (X - count * step > step * 0.2) {
+      svg.append(s('line', { x1: x1, y1: 82, x2: x1, y2: 96, class: 'ac' }), s('text', { x: x1, y: 124, 'text-anchor': 'middle', class: 'tb' }, Core.fmt(X, 6) + ' ' + label));
+    }
+    svg.append(s('text', { x: x0, y: 138, class: 'ts' }, 'Skala ' + label + ' (garis-garis di bawah batang)'));
+    fig.replaceChildren(tabs, svg, caption);
+    const parts = keys.filter((k) => k !== 'm').map((k) => Core.fmt(1 / U[k].f, 6) + ' ' + U[k].label);
+    caption.textContent = '1 m = ' + parts.join(' = ') + '. Batangnya sama, hanya angkanya yang berubah.';
+  }
+  draw();
+  return fig;
+}
+
+function converterWithTabs() {
+  const holder = h('div');
+  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Pilih jenis konversi' });
+  const cats = ['pressure', 'force', 'length', 'temperature'];
+  let current = 'length';
+  const buttons = cats.map((c) => {
+    const b = h('button', { type: 'button', onclick() { current = c; draw(); } }, CAT_LABEL[c]);
+    tabs.append(b);
+    return b;
+  });
+  function draw() {
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', cats[i] === current ? 'true' : 'false'));
+    holder.replaceChildren(Converter(current));
+  }
+  draw();
+  return h('div', {}, tabs, holder);
+}
+
+function predictionGame() {
+  const cats = ['pressure', 'force', 'length'];
+  const root = h('div', { class: 'card' });
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let q = null;
+  function newQuestion() {
+    const cat = pick(cats);
+    const keys = Object.keys(Core.CATEGORIES[cat].units).filter((k) => !Core.CATEGORIES[cat].units[k].adv);
+    let a;
+    let b;
+    do { a = pick(keys); b = pick(keys); } while (a === b);
+    q = { cat, a, b, answered: false };
+    draw();
+  }
+  function answer(guessBigger) {
+    const U = Core.CATEGORIES[q.cat].units;
+    const bigger = U[q.a].f > U[q.b].f;
+    const sol = Core.convertSteps(q.cat, 1, q.a, q.b);
+    const base = Core.CATEGORIES[q.cat].base;
+    const why = '1 ' + U[q.a].label + ' = ' + Core.fmt(U[q.a].f, 8) + ' ' + base + ', sedangkan 1 ' + U[q.b].label + ' = ' + Core.fmt(U[q.b].f, 8) + ' ' + base +
+      '. ' + U[q.b].label + ' lebih ' + (bigger ? 'kecil' : 'besar') + ', jadi angkanya ' + (bigger ? 'membesar' : 'mengecil') + ': 1 ' + U[q.a].label + ' ' + Core.eqv(sol.result) + ' ' + U[q.b].label + '.';
+    q.answered = true;
+    q.ok = guessBigger === bigger;
+    q.why = why;
+    draw();
+  }
+  function draw() {
+    const U = Core.CATEGORIES[q.cat].units;
+    const bigBtn = h('button', { class: 'btn', type: 'button', disabled: q.answered, onclick() { answer(true); } }, 'Membesar');
+    const smallBtn = h('button', { class: 'btn', type: 'button', disabled: q.answered, onclick() { answer(false); } }, 'Mengecil');
+    const nextBtn = h('button', { class: 'btn secondary', type: 'button', onclick: newQuestion }, 'Soal lain');
+    root.replaceChildren(
+      h('p', {}, h('strong', {}, CAT_LABEL[q.cat] + ': '), 'mengubah 1 ' + U[q.a].label + ' (' + U[q.a].name + ') ke ' + U[q.b].label + ' (' + U[q.b].name + '). Angkanya akan...'),
+      h('div', { class: 'btn-row' }, bigBtn, smallBtn, nextBtn),
+      ...(q.answered ? [h('div', { class: q.ok ? 'result' : 'pitfall', role: 'status' }, h('strong', {}, q.ok ? 'Tepat. ' : 'Belum tepat. '), q.why)] : []));
+  }
+  newQuestion();
+  return root;
+}
+
+PAGES.mulai = function (main) {
+  main.append(
+    h('div', { class: 'page-head' },
+      h('div', { class: 'kicker' }, 'Mulai'),
+      h('h1', {}, 'Satu besaran, banyak cara menulisnya'),
+      h('p', { class: 'lead' }, 'Panjang meja tetap sama, entah kamu menulisnya 1 m atau 100 cm. Halaman ini membantumu mengingat tekanan, gaya, panjang, dan suhu: pahami idenya, coba visualnya, ikuti langkah hitung, lalu uji dirimu dengan kuis.')),
+    section('Satuan hanya cara menulis',
+      h('p', {}, '1 m dan 100 cm adalah panjang yang sama. Yang berubah hanya penggarisnya: satuan yang lebih kecil membutuhkan angka yang lebih besar untuk besaran yang sama. Pilih skala di bawah dan lihat batang yang sama diukur ulang.'),
+      oneQuantityFigure()),
+    section('Semua lewat satu satuan perantara',
+      h('p', {}, 'Kalau ada 6 satuan tekanan dan tiap pasangan butuh rumus sendiri, kamu butuh 6 × 5 = 30 rumus. Solusinya satu satuan perantara: ubah dulu ke perantara, baru ke satuan tujuan. Cukup satu rumus untuk semua pasangan.'),
+      h('div', { class: 'formula-box' }, 'hasil = nilai × faktor asal ÷ faktor tujuan'),
+      h('p', {}, 'Faktor menjawab pertanyaan: "1 satuan ini sama dengan berapa satuan perantara?" Contoh: 1 ft = 0,3048 m dan 1 cm = 0,01 m. Analogi dari dunia CS: ini seperti normalisasi data ke satu format bersama sebelum diproses.'),
+      h('div', { class: 'pitfall' }, h('strong', {}, 'Pengecualian: suhu. '), 'Titik nol tiap skala suhu berbeda, jadi selain dikali juga harus digeser. Itu dibahas di modul Suhu.'),
+      h('p', {}, 'Coba sendiri. Semua langkah hitung langsung tampil.'),
+      converterWithTabs()),
+    section('Tebak arahnya sebelum menghitung',
+      h('p', {}, 'Aturan cepat: kalau satuan tujuan lebih kecil dari satuan asal, angkanya membesar. Kalau lebih besar, angkanya mengecil. Latih nalar ini dulu, karena inilah cara paling cepat mendeteksi salah hitung.'),
+      predictionGame()),
+    section('Pilih topik',
+      h('div', { class: 'cards' },
+        [
+          ['tekanan', 'Tekanan', 'Gaya per luas. Pa, bar, atm, psi, serta gauge dan absolut.'],
+          ['gaya', 'Gaya', 'F = m × a. Newton, kgf, lbf, dan beda massa dengan berat.'],
+          ['panjang', 'Panjang', 'Metrik dan imperial, plus luas dan volume.'],
+          ['suhu', 'Suhu', 'Titik nol berbeda, perubahan suhu, dan nol mutlak.'],
+        ].map(([id, title, text]) => h('a', { class: 'card', href: '#' + id, 'data-topic': id }, h('h3', {}, title), h('p', {}, text))))));
+};
+
+/* ---------- Progres (localStorage dengan cadangan di memori) ---------- */
+const Store = (function () {
+  const KEY = 'belajar-konversi:v1';
+  let state = { v: 1, quiz: {} };
+  let persistent = true;
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.v === 1 && parsed.quiz && typeof parsed.quiz === 'object') state = parsed;
+    }
+  } catch (e) {
+    persistent = false;
+  }
+  function save() {
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (e) {
+      persistent = false;
+    }
+  }
+  function rec(id) {
+    if (!state.quiz[id]) state.quiz[id] = { tries: 0 };
+    return state.quiz[id];
+  }
+  return {
+    get: (id) => state.quiz[id] || null,
+    persistent: () => persistent,
+    lessonDone: (id) => !!(state.lessons && state.lessons[id]),
+    markLesson(id) { if (!state.lessons) state.lessons = {}; state.lessons[id] = true; save(); },
+    /* Jawaban pertama dicatat sekali; periksa ulang tidak mengubahnya. */
+    recordCheck(id, ok) {
+      const r = rec(id);
+      if (r.first === undefined) {
+        r.first = ok ? 'benar' : 'salah';
+        r.assisted = !!(r.hint || r.revealed);
+      }
+      r.tries += 1;
+      if (ok) r.solved = true;
+      save();
+    },
+    markHint(id) { rec(id).hint = true; save(); },
+    markRevealed(id) { const r = rec(id); if (!r.solved) r.revealed = true; save(); },
+    reset() { state = { v: 1, quiz: {} }; save(); },
+  };
+})();
+
+/* ---------- Kuis satu per satu ---------- */
+let pendingRetry = null;
+function takeRetry(topic) {
+  const yes = pendingRetry === topic;
+  if (yes) pendingRetry = null;
+  return yes;
+}
+const KIND_LABEL = { konsep: 'Konsep', prediksi: 'Prediksi', hitungan: 'Hitungan', jebakan: 'Jebakan umum', gabungan: 'Gabungan' };
+const STATUS_MARK = { ok: '✓', late: '↻', bad: '✗', rev: '◐', none: '' };
+const STATUS_TEXT = {
+  ok: 'benar pada jawaban pertama tanpa bantuan', late: 'benar setelah petunjuk atau percobaan ulang', bad: 'salah, belum selesai',
+  rev: 'pembahasan dibuka sebelum benar', none: 'belum dikerjakan',
+};
+
+function statusOf(id) {
+  const r = Store.get(id);
+  if (!r) return 'none';
+  if (r.first === 'benar' && !r.assisted) return 'ok';
+  if (r.solved) return 'late';
+  if (r.revealed) return 'rev';
+  if (r.first === 'salah') return 'bad';
+  return 'none';
+}
+
+function countStatuses(questions) {
+  const c = { ok: 0, late: 0, bad: 0, rev: 0, none: 0 };
+  for (const q of questions) c[statusOf(q.id)] += 1;
+  return c;
+}
+
+function Quiz(all, opts) {
+  opts = opts || {};
+  let list = all.slice();
+  let retry = false;
+  let idx = 0;
+  const ui = {};
+  const root = h('div', { class: 'quiz' });
+  const ustate = (q) => ui[q.id] || (ui[q.id] = { sel: null, text: '', fb: null, hint: false, explain: false });
+  const wrongList = () => all.filter((q) => ['bad', 'rev', 'late'].includes(statusOf(q.id)));
+
+  function explainNode(q) {
+    if (q.type === 'mc') {
+      return h('div', { class: 'fb' }, h('strong', {}, 'Pembahasan. '), 'Jawaban benar: ' + q.options[q.correct] + '. ', q.why);
+    }
+    const sol = q.solve();
+    return h('div', { class: 'fb' },
+      h('strong', {}, 'Pembahasan. '), 'Jawaban: ' + Core.shown(sol.result) + ' ' + sol.unit + '.',
+      stepsList(sol.steps));
+  }
+
+  function draw() {
+    const q = list[idx];
+    const u = ustate(q);
+    const dotsEl = h('div', { class: 'dots', role: 'group', 'aria-label': 'Daftar soal' });
+    const scoreEl = h('div', { class: 'legend-line' });
+    const fbEl = h('div', { 'aria-live': 'polite' });
+    const hintEl = h('div');
+    const explainEl = h('div');
+
+    function refresh() {
+      dotsEl.replaceChildren(...list.map((item, i) => {
+        const status = statusOf(item.id);
+        return h('button', {
+          type: 'button', class: 'dot ' + status, 'aria-current': i === idx ? 'true' : 'false',
+          'aria-label': 'Soal ' + (i + 1) + ': ' + STATUS_TEXT[status],
+          onclick() { idx = i; draw(); },
+        }, String(i + 1) + (STATUS_MARK[status] ? ' ' + STATUS_MARK[status] : ''));
+      }));
+      const c = countStatuses(all);
+      scoreEl.textContent = 'Skor jawaban pertama tanpa bantuan: ' + c.ok + ' dari ' + all.length + ' benar. Benar setelah bantuan atau mencoba lagi: ' + c.late +
+        '. Pembahasan dibuka: ' + c.rev + '. Tanda: ✓ benar pertama, ↻ benar setelah bantuan, ✗ salah, ◐ dibuka.';
+      fbEl.className = u.fb ? 'fb ' + u.fb.cls : '';
+      fbEl.replaceChildren(u.fb ? u.fb.msg : '');
+      hintEl.replaceChildren(u.hint ? h('div', { class: 'fb hint' }, h('strong', {}, 'Petunjuk. '), q.hint) : '');
+      explainEl.replaceChildren(u.explain ? explainNode(q) : '');
+    }
+
+    function setFb(cls, msg) { u.fb = { cls, msg }; }
+
+    function check() {
+      if (q.type === 'mc') {
+        if (u.sel === null) { setFb('hint', 'Pilih salah satu jawaban dulu.'); refresh(); return; }
+        const ok = u.sel === q.correct;
+        Store.recordCheck(q.id, ok);
+        setFb(ok ? 'ok' : 'bad', ok ? 'Benar. ' + q.why : (q.wrong[u.sel] || 'Belum tepat. Coba lagi atau buka pembahasan.'));
+      } else {
+        const p = Core.parseNumber(u.text);
+        if (!p.ok) { setFb('hint', p.error); refresh(); return; }
+        const sol = q.solve();
+        const ck = Core.checkNumeric(p.value, sol.result, q.dp);
+        Store.recordCheck(q.id, ck.ok);
+        if (ck.ok) {
+          setFb('ok', 'Benar. Jawaban: ' + Core.shown(sol.result) + ' ' + sol.unit + '.');
+        } else {
+          const trap = q.traps.find((t) => Core.checkNumeric(p.value, t.value, t.dp === undefined ? q.dp : t.dp).ok);
+          const generic = p.value > sol.result ? 'Hasilmu lebih besar dari yang seharusnya.' : 'Hasilmu lebih kecil dari yang seharusnya.';
+          setFb('bad', trap ? trap.msg : 'Belum tepat. ' + generic + ' Periksa rumus, satuan, dan urutan operasi. Petunjuk: ' + q.hint);
+        }
+      }
+      refresh();
+    }
+
+    let answer;
+    if (q.type === 'mc') {
+      answer = h('fieldset', {}, h('legend', {}, q.text), q.options.map((opt, i) => {
+        const input = h('input', { type: 'radio', name: 'q-' + q.id, value: String(i), checked: u.sel === i, onchange() { u.sel = i; } });
+        return h('label', { class: 'opt' }, input, h('span', {}, opt));
+      }));
+    } else {
+      const inputId = uid('ans');
+      const input = h('input', { type: 'text', id: inputId, inputmode: 'decimal', autocomplete: 'off', spellcheck: 'false', value: u.text, 'aria-describedby': inputId + '-hint' });
+      input.addEventListener('input', () => { u.text = input.value; });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+      const rounding = q.dp === 'exact' ? 'Jawaban tepat, tanpa pembulatan.' : 'Bulatkan sampai ' + q.dp + ' desimal (lebih teliti juga diterima).';
+      answer = h('div', { class: 'num-answer' },
+        h('div', { class: 'field' }, h('label', { for: inputId }, 'Jawabanmu'), input, h('div', { class: 'hint', id: inputId + '-hint' }, rounding + ' Boleh 1,5 atau 1.5.')),
+        h('div', { class: 'unit' }, q.unit));
+    }
+
+    const hintBtn = h('button', { class: 'btn secondary', type: 'button', onclick() {
+      u.hint = !u.hint;
+      if (u.hint) Store.markHint(q.id);
+      refresh();
+    } }, 'Petunjuk');
+    const checkBtn = h('button', { class: 'btn', type: 'button', onclick: check }, 'Periksa jawaban');
+    const explainBtn = h('button', { class: 'btn secondary', type: 'button', onclick() {
+      u.explain = !u.explain;
+      if (u.explain) Store.markRevealed(q.id);
+      refresh();
+    } }, 'Pembahasan');
+    const againBtn = h('button', { class: 'btn secondary', type: 'button', onclick() {
+      ui[q.id] = null;
+      delete ui[q.id];
+      draw();
+    } }, 'Ulangi soal ini');
+    const prev = h('button', { class: 'btn secondary', type: 'button', disabled: idx === 0, onclick() { idx -= 1; draw(); } }, '← Sebelumnya');
+    const next = h('button', { class: 'btn secondary', type: 'button', disabled: idx === list.length - 1, onclick() { idx += 1; draw(); } }, 'Berikutnya →');
+    const wrong = wrongList();
+    const retryRow = retry
+      ? h('div', { class: 'btn-row' }, h('span', { class: 'pill' }, 'Mode ulang: ' + list.length + ' soal'), h('button', { class: 'btn secondary', type: 'button', onclick() { retry = false; list = all.slice(); idx = 0; draw(); } }, 'Tampilkan semua soal'))
+      : h('div', { class: 'btn-row' }, h('button', { class: 'btn secondary', type: 'button', disabled: wrong.length === 0, onclick() { retry = true; list = wrongList(); idx = 0; draw(); } }, 'Ulangi soal yang salah (' + wrong.length + ')'));
+
+    root.replaceChildren(
+      h('div', { class: 'quiz-top' }, h('strong', {}, 'Soal ' + (idx + 1) + ' dari ' + list.length), dotsEl),
+      scoreEl,
+      h('div', { class: 'card qcard' },
+        h('span', { class: 'pill' }, KIND_LABEL[q.kind]),
+        h('h3', {}, q.text),
+        answer,
+        h('div', { class: 'btn-row' }, checkBtn, hintBtn, explainBtn, againBtn),
+        fbEl, hintEl, explainEl),
+      h('div', { class: 'btn-row' }, prev, next),
+      retryRow);
+    refresh();
+  }
+
+  if (opts.startRetry && wrongList().length) { retry = true; list = wrongList(); }
+  draw();
+  return root;
+}
+
+/* ---------- Kerangka modul ---------- */
+const prefersReducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function arrowDefs(id) {
+  return s('defs', {}, s('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, s('path', { d: 'M0 0L10 5L0 10z', class: 'acf' })));
+}
+
+function unitTable(cat, uses, includeAdvanced) {
+  const c = Core.CATEGORIES[cat];
+  const rows = Object.keys(c.units).filter((k) => includeAdvanced === !!c.units[k].adv).map((k) => {
+    const u = c.units[k];
+    return h('tr', {}, h('td', {}, h('strong', {}, u.label)), h('td', {}, u.name), h('td', { class: 'num' }, '1 ' + u.label + ' = ' + Core.fmt(u.f, 10) + ' ' + c.base), h('td', {}, uses[k] || ''));
+  });
+  return h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+    h('thead', {}, h('tr', {}, h('th', {}, 'Simbol'), h('th', {}, 'Nama'), h('th', {}, 'Faktor ke ' + c.base), h('th', {}, 'Dipakai untuk'))),
+    h('tbody', {}, rows)));
+}
+
+function exampleCard(ex) {
+  return h('div', { class: 'card example' },
+    h('h3', {}, ex.title),
+    h('p', { class: 'problem' }, ex.problem),
+    stepper(ex.solution),
+    ex.note ? h('p', { class: 'hint' }, ex.note) : null);
+}
+
+function pitfallBox(title, text) {
+  return h('div', { class: 'pitfall' }, h('strong', {}, title + ' '), text);
+}
+
+function pythonSection(def) {
+  return h('details', {},
+    h('summary', {}, 'Kaitkan dengan Python'),
+    h('p', {}, def.python.text),
+    h('pre', { class: 'code' }, def.python.code),
+    h('p', { class: 'hint' }, 'Sumber: ' + def.python.file + ' di repository ini.'));
+}
+
+function renderModule(main, def) {
+  document.body.dataset.topic = def.id;
+  const sections = [];
+  const add = (key, title, ...kids) => {
+    const sec = section(title, kids);
+    sec.dataset.key = key;
+    sections.push({ title, sec });
+    return sec;
+  };
+  const toc = h('div', { class: 'toc', role: 'group', 'aria-label': 'Loncat ke bagian' });
+  const body = h('div', { class: 'module-grid' });
+  add('pahami', 'Pahami', ...def.understand());
+  def.visuals.forEach((v, i) => add('visual' + i, v.title, h('p', {}, v.text), v.build()));
+  add('satuan', 'Kenali satuan', ...def.unitsContent());
+  add('contoh', 'Ikuti contoh', h('p', {}, 'Buka satu langkah demi satu langkah. Tiap contoh memakai urutan yang sama: diketahui, rumus, substitusi, hitungan antara, hasil, lalu cek masuk akal.'), def.examples.map(exampleCard));
+  add('hitung', 'Hitung sendiri', h('p', {}, 'Masukkan nilai dan pilih satuan. Semua langkah hitung ikut berubah.'), Converter(def.cat, def.converter));
+  add('jebakan', 'Jebakan umum', ...def.pitfalls.map((p) => pitfallBox(p[0], p[1])));
+  if (def.quiz) add('kuis', 'Uji pemahaman', def.quiz());
+  add('lanjutan', 'Lanjutan', ...def.advanced());
+  for (const { title, sec } of sections) {
+    toc.append(h('button', { type: 'button', onclick() {
+      sec.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    } }, title));
+    body.append(sec);
+  }
+  main.append(
+    h('div', { class: 'page-head' }, h('div', { class: 'kicker' }, def.kicker), h('h1', {}, def.title), h('p', { class: 'lead' }, def.lead), toc),
+    body,
+    h('button', { class: 'btn', type: 'button', onclick(e) { Store.markLesson(def.id); e.currentTarget.textContent = '✓ Materi sudah dipelajari'; announce('Progres materi disimpan.'); } }, Store.lessonDone(def.id) ? '✓ Materi sudah dipelajari' : 'Tandai materi sudah dipelajari'),
+    h('p', { class: 'hint' }, 'Penanda ini mencatat bacaanmu; skor kuis tetap berdasarkan jawaban. Lihat rekap di Kuis gabungan.'));
+}
+
+/* ---------- Modul Tekanan ---------- */
+function pressureForceVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const stepsBox = h('div');
+  const F = sliderField({ label: 'Gaya F', unit: 'N', min: 0, max: 2000, step: 10, value: 500, fieldMin: 0, minMsg: 'Gaya tidak boleh negatif di simulasi ini.', onChange: update });
+  const A = sliderField({ label: 'Luas kontak A', unit: 'm²', min: 0.05, max: 2, step: 0.05, value: 0.25, positive: true, onChange: update });
+  const preset = (f, a) => { F.setValue(f); A.setValue(a); update(); };
+  function draw(f, a, p) {
+    const svg = s('svg', { viewBox: '0 0 460 300', role: 'img', 'aria-label': 'Balok menekan lantai dengan gaya ' + Core.fmt(f) + ' N pada luas ' + Core.fmt(a) + ' meter persegi. Tekanannya ' + Core.fmt(p) + ' Pa.' });
+    svg.append(s('title', {}, 'Gaya, luas, dan tekanan'), arrowDefs('pfArrow'));
+    const w = 40 + 300 * Math.min(a / 2, 1);
+    const cx = 230;
+    const x = cx - w / 2;
+    const L = f <= 0 ? 0 : 30 + 105 * Math.min(f / 2000, 1);
+    svg.append(
+      s('rect', { x: 10, y: 230, width: 440, height: 64, class: 'soft' }),
+      s('rect', { x, y: 160, width: w, height: 70, class: 'tint' }),
+      s('text', { x: cx, y: 200, 'text-anchor': 'middle', class: 'tm' }, 'A = ' + Core.fmt(a, 4) + ' m²'));
+    if (L > 0) {
+      svg.append(
+        s('line', { x1: cx, y1: 155 - L, x2: cx, y2: 156, class: 'ac', 'marker-end': 'url(#pfArrow)', 'stroke-width': 5 }),
+        s('text', { x: cx + 14, y: 155 - L + 16, class: 'tb' }, 'F = ' + Core.fmt(f, 4) + ' N'));
+    } else {
+      svg.append(s('text', { x: cx + 14, y: 100, class: 'tb' }, 'F = 0 N'));
+    }
+    const lp = 8 + 32 * Math.min(Math.log10(1 + p) / Math.log10(1 + 40000), 1);
+    const n = 9;
+    for (let i = 0; i < n; i += 1) {
+      const xi = x + ((i + 0.5) * w) / n;
+      svg.append(s('line', { x1: xi, y1: 236, x2: xi, y2: 236 + lp, class: 'ac', 'marker-end': 'url(#pfArrow)', 'stroke-width': 2 }));
+    }
+    svg.append(s('text', { x: cx, y: 290, 'text-anchor': 'middle', class: 'tm' }, 'P = ' + Core.fmt(p, 6) + ' Pa'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Panah besar: gaya. Panah kecil di bawah balok: tekanan pada lantai (makin panjang, makin besar; skala logaritmik).'));
+  }
+  function update() {
+    const f = F.read();
+    const a = A.read();
+    if (!f.ok || !a.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.pressureFromForce(f.value, a.value);
+      draw(f.value, a.value, sol.result);
+      const kPa = Core.convertLinear('pressure', sol.result, 'Pa', 'kPa');
+      const bar = Core.convertLinear('pressure', sol.result, 'Pa', 'bar');
+      out.replaceChildren(h('div', { class: 'result' }, 'P ', Core.eqv(sol.result), ' Pa ', Core.eqv(kPa), ' kPa ', Core.eqv(bar), ' bar'));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps),
+        h('details', {}, h('summary', {}, 'Langkah tambahan: Pa ke kPa dan bar'),
+          stepsList(Core.convertSteps('pressure', sol.result, 'Pa', 'kPa').steps),
+          stepsList(Core.convertSteps('pressure', sol.result, 'Pa', 'bar').steps)));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' },
+      F.el, A.el,
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn secondary', type: 'button', onclick() { preset(500, 0.5); } }, 'Gaya sama, luas besar (0,5 m²)'),
+        h('button', { class: 'btn secondary', type: 'button', onclick() { preset(500, 0.1); } }, 'Gaya sama, luas kecil (0,1 m²)')),
+      out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+function pressureGaugeVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const stepsBox = h('div');
+  const G = numberField({ label: 'Tekanan gauge', value: 32, hint: 'Boleh negatif (vakum parsial)', onChange: update });
+  const Gu = unitSelect({ label: 'Satuan gauge', cat: 'pressure', value: 'psi', onChange: update });
+  const At = numberField({ label: 'Tekanan atmosfer di lokasi', value: 1, positive: true, onChange: update });
+  const Au = unitSelect({ label: 'Satuan atmosfer', cat: 'pressure', value: 'atm', onChange: update });
+  const Ou = unitSelect({ label: 'Hasil dalam', cat: 'pressure', value: 'bar', onChange: update });
+  function draw(sol) {
+    const x0 = 20;
+    const x1 = 440;
+    const label = sol.unit;
+    const total = sol.result;
+    const maxV = Math.min(Number.MAX_VALUE, Math.max(total, sol.atmOut) * 1.12) || 1;
+    const scale = (value) => (value / maxV) * (x1 - x0);
+    const neg = sol.gaugeOut < 0;
+    const svg = s('svg', { viewBox: '0 0 460 230', role: 'img', 'aria-label': 'Batang tekanan: atmosfer ' + Core.fmt(sol.atmOut, 5) + ' ' + label + (neg ? ', gauge negatif ' : ' ditambah gauge ') + Core.fmt(sol.gaugeOut, 5) + ' ' + label + ', absolut ' + Core.fmt(total, 5) + ' ' + label + '.' });
+    svg.append(
+      s('title', {}, 'Tekanan atmosfer, gauge, dan absolut'),
+      s('defs', {}, s('pattern', { id: 'hatch', width: 8, height: 8, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, s('line', { x1: 0, y1: 0, x2: 0, y2: 8, stroke: '#a3221f', 'stroke-width': 2 }))));
+    const atmW = scale(sol.atmOut);
+    svg.append(s('rect', { x: x0, y: 70, width: atmW, height: 44, class: 'soft' }));
+    if (atmW >= 90) svg.append(s('text', { x: x0 + atmW / 2, y: 97, 'text-anchor': 'middle', class: 't' }, 'atmosfer ' + Core.fmt(sol.atmOut, 4)));
+    if (!neg) {
+      const gW = scale(sol.gaugeOut);
+      svg.append(s('rect', { x: x0 + atmW, y: 70, width: gW, height: 44, class: 'tint' }));
+      if (gW >= 90) svg.append(s('text', { x: x0 + atmW + gW / 2, y: 97, 'text-anchor': 'middle', class: 'tb' }, 'gauge ' + Core.fmt(sol.gaugeOut, 4)));
+    } else {
+      svg.append(s('rect', { x: x0 + scale(total), y: 70, width: scale(-sol.gaugeOut), height: 44, fill: 'url(#hatch)', stroke: '#a3221f' }));
+    }
+    const xe = x0 + scale(total);
+    svg.append(
+      s('line', { x1: x0, y1: 56, x2: xe, y2: 56, class: 'ac' }),
+      s('line', { x1: x0, y1: 50, x2: x0, y2: 62, class: 'ac' }),
+      s('line', { x1: xe, y1: 50, x2: xe, y2: 62, class: 'ac' }),
+      s('text', { x: x0, y: 40, class: 'tb' }, 'P absolut = ' + Core.fmt(total, 6) + ' ' + label),
+      s('line', { x1: x0, y1: 134, x2: x1, y2: 134, class: 'ln' }));
+    const step = niceStep(maxV, 6);
+    for (let index = 0; index < 12 && index * step <= maxV * (1 + 1e-9); index += 1) {
+      const t = index * step;
+      const x = x0 + scale(t);
+      svg.append(s('line', { x1: x, y1: 134, x2: x, y2: 142, class: 'ln' }), s('text', { x, y: 158, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(t, 4)));
+    }
+    svg.append(
+      s('text', { x: x0, y: 176, class: 'ts' }, '0 = vakum penuh (tidak ada udara sama sekali)'),
+      s('rect', { x: x0, y: 190, width: 14, height: 14, class: 'soft' }),
+      s('text', { x: x0 + 20, y: 202, class: 'ts' }, 'tekanan atmosfer'),
+      s('rect', { x: x0 + 150, y: 190, width: 14, height: 14, class: neg ? '' : 'tint', fill: neg ? 'url(#hatch)' : undefined, stroke: neg ? '#a3221f' : undefined }),
+      s('text', { x: x0 + 170, y: 202, class: 'ts' }, neg ? 'gauge negatif (vakum parsial)' : 'tekanan gauge (kelebihan di atas atmosfer)'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Skala dalam ' + label + '. Absolut = atmosfer + gauge; gauge negatif berarti di bawah tekanan udara luar.'));
+  }
+  function update() {
+    const g = G.read();
+    const a = At.read();
+    if (!g.ok || !a.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.gaugeToAbsolute(g.value, Gu.value, a.value, Au.value, Ou.value);
+      draw(sol);
+      out.replaceChildren(h('div', { class: 'result' }, 'P absolut ', Core.eqv(sol.result), ' ', sol.unit));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' },
+      h('div', { class: 'row' }, G.el, Gu.el),
+      h('div', { class: 'row' }, At.el, Au.el),
+      h('div', { class: 'row' }, Ou.el),
+      out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+const PRESSURE_USES = {
+  Pa: 'Satuan SI; dasar rumus fisika. Sangat kecil.',
+  kPa: 'Teknik umum, cuaca, ventilasi.',
+  MPa: 'Kekuatan material dan hidrolik tekanan tinggi.',
+  bar: 'Industri dan mesin; dekat dengan 1 atm.',
+  mbar: 'Cuaca dan vakum; 1 mbar = 100 Pa.',
+  atm: 'Tekanan udara rata-rata di permukaan laut (standar).',
+  psi: 'Ban dan kompresor; lbf per inci persegi.',
+  Torr: 'Vakum; 760 Torr = 1 atm persis.',
+};
+
+const MODULES = {};
+
+MODULES.tekanan = {
+  id: 'tekanan', cat: 'pressure', kicker: 'Modul 1', title: 'Tekanan',
+  lead: 'Gaya yang sama bisa terasa ringan atau tajam, tergantung luas yang menerimanya. Tekanan adalah ukuran itu.',
+  converter: { value: 2, from: 'atm', to: 'psi' },
+  quiz: () => Quiz(QUIZ.tekanan, { startRetry: takeRetry('tekanan') }),
+  understand: () => [
+    h('p', {}, 'Tekanan adalah seberapa terpusat sebuah gaya pada suatu luas. Sepatu hak tinggi menancap di tanah lunak, sepatu datar tidak: beratmu sama, luas kontaknya berbeda. Pisau tajam memotong karena luas ujungnya sangat kecil.'),
+    h('div', { class: 'formula-box' }, 'P = F ÷ A'),
+    h('ul', { class: 'legend' },
+      h('li', {}, h('strong', {}, 'P'), ' tekanan, dalam pascal (Pa).'),
+      h('li', {}, h('strong', {}, 'F'), ' gaya yang tegak lurus bidang, dalam newton (N).'),
+      h('li', {}, h('strong', {}, 'A'), ' luas bidang yang menerima gaya, dalam meter persegi (m²).'),
+      h('li', {}, '1 Pa = 1 N/m². Angkanya kecil sekali, itu sebabnya ada kPa, MPa, bar, dan satuan lain.')),
+    h('p', {}, 'Luas diperkecil, tekanan naik. Luas diperbesar, tekanan turun. Itulah ide yang kamu coba di visual berikut.'),
+  ],
+  visuals: [
+    { title: 'Coba: gaya dan luas', text: 'Geser gaya dan luas kontak. Tekan dua tombol di bawahnya untuk membandingkan gaya yang sama pada luas berbeda.', build: pressureForceVisual },
+    { title: 'Coba: gauge dan absolut', text: 'Alat ukur biasa membaca selisih terhadap udara luar (gauge). Rumus fisika sering butuh tekanan absolut, yang diukur dari vakum penuh. Absolut = gauge + atmosfer, dengan satuan yang sama.', build: pressureGaugeVisual },
+  ],
+  unitsContent: () => [
+    h('p', {}, 'Semua satuan tekanan hanyalah kelipatan Pa dengan asal-usul berbeda. Faktor di tabel menjawab: 1 satuan ini sama dengan berapa Pa?'),
+    unitTable('pressure', PRESSURE_USES, false),
+    pitfallBox('1 atm dan 1 bar dekat, tetapi tidak sama.', '1 atm = 101.325 Pa dan 1 bar = 100.000 Pa, jadi 1 atm = 1,01325 bar (selisih sekitar 1,3%). Atmosfer standar adalah nilai acuan; tekanan udara di tempatmu bisa berbeda.'),
+    h('p', {}, 'Angka psi bisa diturunkan sendiri karena psi adalah lbf per inci persegi. Kuadratkan konversi inci ke meter, karena yang dikonversi adalah luas.'),
+    exampleCard({
+      title: 'Asal angka psi', problem: '1 lbf (4,4482216 N) menekan bidang 1 in² (0,0254 m × 0,0254 m). Berapa Pa?',
+      solution: () => Core.pressureFromForce(4.4482216152605, 0.0254 * 0.0254),
+      note: 'Hasilnya 6.894,757 Pa, persis faktor psi di tabel. Panjang dikuadratkan karena luas = panjang × panjang.',
+    }),
+    h('p', {}, 'Satuan lain yang sering muncul: mmHg (milimeter raksa) dipakai untuk tekanan darah, 1 mmHg ≈ 133,322 Pa. Torr nilainya hampir sama dengan mmHg, tetapi definisinya berbeda.'),
+  ],
+  examples: [
+    { title: 'Contoh 1: dari gaya dan luas', problem: 'Balok menekan lantai dengan gaya 500 N pada luas 0,25 m². Berapa tekanannya?', solution: () => Core.pressureFromForce(500, 0.25) },
+    { title: 'Contoh 2: kPa ke bar', problem: 'Ubah 250 kPa ke bar.', solution: () => Core.convertSteps('pressure', 250, 'kPa', 'bar') },
+    { title: 'Contoh 3: atm ke psi', problem: 'Ubah 2 atm ke psi.', solution: () => Core.convertSteps('pressure', 2, 'atm', 'psi') },
+    { title: 'Contoh 4: gauge ke absolut', problem: 'Ban menunjukkan 32 psi (gauge). Tekanan atmosfer 1 atm. Berapa tekanan absolutnya dalam bar?', solution: () => Core.gaugeToAbsolute(32, 'psi', 1, 'atm', 'bar'), note: 'Perhatikan 1 atm = 1,01325 bar. Samakan satuan lebih dulu, baru jumlahkan.' },
+  ],
+  pitfalls: [
+    ['Gauge bukan absolut.', 'Bacaan ban 32 psi adalah gauge. Tekanan di dalamnya sekitar 46,7 psi absolut karena atmosfer ikut ditambahkan.'],
+    ['Samakan satuan sebelum menjumlahkan.', 'Jangan menambah 32 psi dengan 1 atm. Ubah salah satunya dulu, misalnya keduanya ke bar.'],
+    ['Faktor luas dikuadratkan.', '1 in² bukan 0,0254 m². Luasnya (0,0254 m)² = 0,00064516 m².'],
+  ],
+  advanced: () => [
+    h('p', {}, 'Dua satuan tambahan ada di konverter Python repository ini: mbar dan Torr.'),
+    unitTable('pressure', PRESSURE_USES, true),
+    Converter('pressure', { value: 760, from: 'Torr', to: 'atm', advanced: true }),
+    pythonSection({
+      python: {
+        text: 'Tabel faktor di atas adalah dictionary FACTORS. Fungsi konversi hanya menjalankan dua langkah: kali faktor asal, bagi faktor tujuan.',
+        file: 'converters/pressure.py dan converters/base.py',
+        code: 'FACTORS = {\n    "Pa": 1,\n    "kPa": 1_000,\n    "MPa": 1_000_000,\n    "bar": 100_000,\n    "mbar": 100,\n    "atm": 101_325,\n    "psi": 6_894.757293168,\n    "Torr": 101_325 / 760,\n}\n\ndef convert_pressure(value, from_unit, to_unit):\n    return convert_linear(value, from_unit, to_unit, FACTORS)\n\n# converters/base.py\nresult = value * factors[from_unit] / factors[to_unit]',
+      },
+    }),
+    h('p', { class: 'hint' }, 'Konversi gauge ke absolut belum ada di aplikasi Streamlit. Visual di halaman ini hanya untuk belajar.'),
+  ],
+};
+
+PAGES.tekanan = (main) => renderModule(main, MODULES.tekanan);
+
+/* ---------- Modul Gaya ---------- */
+function forceMotionVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const motion = h('div', { class: 'formula-box' });
+  const stepsBox = h('div');
+  const M = sliderField({ label: 'Massa m', unit: 'kg', min: 1, max: 20, step: 1, value: 4, positive: true, fieldMin: 1e-6, fieldMax: 1e6, onChange: update });
+  const F = sliderField({ label: 'Gaya resultan F', unit: 'N', min: 0, max: 50, step: 1, value: 12, fieldMin: 0, fieldMax: 1e9, minMsg: 'Simulasi ini memakai besar gaya, jadi minimal 0.', onChange: update });
+  const T = sliderField({ label: 'Waktu t sejak diam', unit: 's', min: 0, max: 5, step: 0.1, value: 2, fieldMin: 0, fieldMax: 5, minMsg: 'Waktu minimal 0.', onChange: update });
+  const runBtn = h('button', { class: 'btn', type: 'button' }, 'Jalankan');
+  const resetBtn = h('button', { class: 'btn secondary', type: 'button' }, 'Reset');
+  const note = h('p', { class: 'hint' }, prefersReducedMotion() ? 'Pengaturan gerak dikurangi aktif, jadi animasi dimatikan. Geser slider waktu untuk melihat geraknya.' : 'Tekan Jalankan untuk melihat balok bergerak dari keadaan diam, atau geser slider waktu sendiri.');
+  let timer = null;
+  function stop() { if (timer) { cancelAnimationFrame(timer); timer = null; } runBtn.textContent = 'Jalankan'; }
+  runBtn.disabled = prefersReducedMotion();
+  runBtn.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    let t0 = T.read().ok ? T.read().value : 0;
+    if (t0 >= 5) t0 = 0;
+    const started = performance.now() - t0 * 1000;
+    runBtn.textContent = 'Jeda';
+    const tick = (now) => {
+      if (!fig.isConnected) { timer = null; return; }
+      const t = Math.min((now - started) / 1000, 5);
+      T.setValue(Math.round(t * 10) / 10);
+      update();
+      if (t >= 5) { stop(); return; }
+      timer = requestAnimationFrame(tick);
+    };
+    timer = requestAnimationFrame(tick);
+  });
+  resetBtn.addEventListener('click', () => { stop(); T.setValue(0); update(); });
+
+  function draw(m, f, a, t) {
+    const v = a * t;
+    const x = 0.5 * a * t * t;
+    const scaleMax = a > 0 ? niceCeil(0.5 * a * 25) : 1;
+    const x0 = 30;
+    const x1 = 430;
+    const bw = 58;
+    const left = x0 + (x / scaleMax) * (x1 - x0 - bw);
+    const svg = s('svg', { viewBox: '0 0 460 240', role: 'img', 'aria-label': 'Balok bermassa ' + Core.fmt(m) + ' kg didorong gaya ' + Core.fmt(f) + ' N, percepatan ' + Core.fmt(a, 5) + ' m/s². Pada t = ' + Core.fmt(t) + ' s posisinya ' + Core.fmt(x, 5) + ' m dan kecepatannya ' + Core.fmt(v, 5) + ' m/s.' });
+    svg.append(s('title', {}, 'Gaya, massa, dan percepatan'), arrowDefs('fmArrow'));
+    svg.append(
+      s('text', { x: x0, y: 24, class: 'tb' }, 'a = ' + Core.fmt(a, 5) + ' m/s²'),
+      s('text', { x: x0 + 150, y: 24, class: 't' }, 'v = ' + Core.fmt(v, 5) + ' m/s'),
+      s('text', { x: x0 + 290, y: 24, class: 't' }, 'x = ' + Core.fmt(x, 5) + ' m'),
+      s('rect', { x: left, y: 130, width: bw, height: 40, rx: 4, class: 'tint' }),
+      s('text', { x: left + bw / 2, y: 155, 'text-anchor': 'middle', class: 'tm' }, Core.fmt(m) + ' kg'),
+      s('line', { x1: x0, y1: 172, x2: x1, y2: 172, class: 'ln' }));
+    if (f > 0) {
+      const L = 30 + 90 * Math.min(f / 50, 1);
+      const ax = Math.min(left, 450 - L);
+      svg.append(
+        s('line', { x1: ax, y1: 108, x2: ax + L, y2: 108, class: 'ac', 'marker-end': 'url(#fmArrow)', 'stroke-width': 5 }),
+        s('text', { x: ax, y: 96, class: 'tb' }, 'F = ' + Core.fmt(f) + ' N'));
+    } else {
+      svg.append(s('text', { x: left, y: 100, class: 'tb' }, 'F = 0 N, tidak ada percepatan'));
+    }
+    const step = niceStep(scaleMax, 5);
+    for (let k = 0; k < 12 && k * step <= scaleMax * (1 + 1e-9); k += 1) {
+      const px = x0 + ((k * step) / scaleMax) * (x1 - x0 - bw) + bw / 2;
+      svg.append(s('line', { x1: px, y1: 172, x2: px, y2: 180, class: 'ln' }), s('text', { x: px, y: 196, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(k * step, 4)));
+    }
+    svg.append(s('text', { x: x0, y: 226, class: 'ts' }, 'Jalur dalam meter (satu dimensi, tanpa gesekan)'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Gaya makin besar atau massa makin kecil, balok makin cepat bertambah kecepatannya.'));
+  }
+  function update() {
+    const m = M.read();
+    const f = F.read();
+    const t = T.read();
+    if (!m.ok || !f.ok || !t.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const sol = Core.accelerationSteps(f.value, m.value);
+      const a = sol.result;
+      draw(m.value, f.value, a, t.value);
+      out.replaceChildren(h('div', { class: 'result' }, 'a ', Core.eqv(a), ' m/s²'));
+      const v = a * t.value;
+      const x = 0.5 * a * t.value * t.value;
+      motion.replaceChildren(
+        h('div', {}, 'Dari diam pada t = ' + Core.fmt(t.value) + ' s:'),
+        h('div', {}, 'v = a × t = ' + Core.fmt(a) + ' × ' + Core.fmt(t.value) + ' ' + Core.eqv(v) + ' m/s'),
+        h('div', {}, 'x = ½ × a × t² = 0,5 × ' + Core.fmt(a) + ' × ' + Core.fmt(t.value) + '² ' + Core.eqv(x) + ' m'));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung percepatan'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' }, M.el, F.el, T.el, h('div', { class: 'btn-row' }, runBtn, resetBtn), note, out, motion),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+function forceWeightVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const stepsBox = h('div');
+  const out = h('div', { 'aria-live': 'polite' });
+  const M = numberField({ label: 'Massa m (kg)', value: 70, positive: true, onChange: update });
+  const Ge = numberField({ label: 'g di Bumi (m/s²)', value: 9.80665, positive: true, hint: 'Gravitasi standar; lokasi nyata sedikit berbeda.', onChange: update });
+  const Gm = numberField({ label: 'g di Bulan (m/s², pendekatan)', value: 1.62, positive: true, onChange: update });
+  function panel(svg, x, title, m, g, W, Wmax) {
+    const L = 20 + 35 * (W / (Wmax || 1));
+    svg.append(
+      s('text', { x: x + 90, y: 30, 'text-anchor': 'middle', class: 'tb' }, title),
+      s('text', { x: x + 90, y: 48, 'text-anchor': 'middle', class: 'ts' }, 'g = ' + Core.fmt(g, 6) + ' m/s²'),
+      s('rect', { x: x + 60, y: 90, width: 60, height: 60, rx: 4, class: 'tint' }),
+      s('text', { x: x + 90, y: 126, 'text-anchor': 'middle', class: 'tm' }, Core.fmt(m) + ' kg'),
+      s('line', { x1: x + 90, y1: 152, x2: x + 90, y2: 152 + L, class: 'ac', 'marker-end': 'url(#fwArrow)', 'stroke-width': 5 }),
+      s('line', { x1: x + 10, y1: 222, x2: x + 170, y2: 222, class: 'ln' }),
+      s('text', { x: x + 90, y: 244, 'text-anchor': 'middle', class: 'tb' }, 'W = ' + Core.fmt(W, 5) + ' N'));
+  }
+  function update() {
+    const m = M.read();
+    const ge = Ge.read();
+    const gm = Gm.read();
+    if (!m.ok || !ge.ok || !gm.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, 'Perbaiki isian yang bertanda merah.'));
+      stepsBox.replaceChildren();
+      return;
+    }
+    try {
+      const e = Core.weightSteps(m.value, ge.value, 'Bumi');
+      const b = Core.weightSteps(m.value, gm.value, 'Bulan');
+      const Wmax = Math.max(e.result, b.result);
+      const svg = s('svg', { viewBox: '0 0 460 256', role: 'img', 'aria-label': 'Massa ' + Core.fmt(m.value) + ' kg sama di Bumi dan Bulan. Gaya berat di Bumi ' + Core.fmt(e.result, 5) + ' N, di Bulan ' + Core.fmt(b.result, 5) + ' N.' });
+      svg.append(s('title', {}, 'Massa tetap, gaya berat berubah'), arrowDefs('fwArrow'));
+      panel(svg, 20, 'Bumi', m.value, ge.value, e.result, Wmax);
+      panel(svg, 270, 'Bulan', m.value, gm.value, b.result, Wmax);
+      fig.replaceChildren(svg, h('figcaption', {}, 'Massa (kg) sama di kedua tempat. Panjang panah gaya berat mengikuti W = m × g.'));
+      out.replaceChildren(h('div', { class: 'result' }, 'Bumi: ' + Core.fmt(e.result, 6) + ' N = ' + Core.fmt(e.kgf, 6) + ' kgf. Bulan: ' + Core.fmt(b.result, 6) + ' N = ' + Core.fmt(b.kgf, 6) + ' kgf.'));
+      stepsBox.replaceChildren(
+        h('div', { class: 'row' }, h('div', {}, h('h3', {}, 'Langkah di Bumi'), stepsList(e.steps)), h('div', {}, h('h3', {}, 'Langkah di Bulan'), stepsList(b.steps))));
+    } catch (err) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, err.message));
+      stepsBox.replaceChildren();
+    }
+  }
+  update();
+  return h('div', { class: 'split' },
+    h('div', { class: 'controls' }, h('div', { class: 'row' }, M.el, Ge.el, Gm.el), out),
+    h('div', { class: 'visual' }, fig),
+    h('div', { class: 'steps-area' }, stepsBox));
+}
+
+const FORCE_USES = {
+  N: 'Satuan SI; 1 N = 1 kg·m/s².',
+  kN: 'Struktur, jembatan, mesin.',
+  kgf: 'Industri lama; gaya berat massa 1 kg di gravitasi standar.',
+  lbf: 'Teknik AS dan Inggris; gaya berat massa 1 pound di gravitasi standar.',
+  dyne: 'Satuan lama sistem CGS; 1 dyne = 10⁻⁵ N.',
+  kip: 'Struktur di AS; 1 kip = 1.000 lbf.',
+};
+
+MODULES.gaya = {
+  id: 'gaya', cat: 'force', kicker: 'Modul 2', title: 'Gaya',
+  lead: 'Gaya mengubah gerak benda. Bagian yang paling sering menjebak: beda massa (kg) dengan gaya (N, kgf, lbf).',
+  converter: { value: 5, from: 'kgf', to: 'N' },
+  quiz: () => Quiz(QUIZ.gaya, { startRetry: takeRetry('gaya') }),
+  understand: () => [
+    h('p', {}, 'Gaya adalah dorongan atau tarikan yang dapat mengubah gerak atau bentuk benda. Untuk satu benda bermassa tetap, gaya resultan (jumlah semua gaya yang bekerja pada benda) memenuhi hukum Newton II:'),
+    h('div', { class: 'formula-box' }, 'F = m × a'),
+    h('ul', { class: 'legend' },
+      h('li', {}, h('strong', {}, 'F'), ' gaya resultan, dalam newton (N).'),
+      h('li', {}, h('strong', {}, 'm'), ' massa, dalam kilogram (kg).'),
+      h('li', {}, h('strong', {}, 'a'), ' percepatan, dalam meter per detik kuadrat (m/s²).'),
+      h('li', {}, '1 N = 1 kg·m/s²: gaya yang memberi massa 1 kg percepatan 1 m/s². Kira-kira berat sebuah apel kecil.')),
+    h('p', {}, 'Gaya resultan bukan salah satu gaya pada benda. Balok diam di meja tetap ditarik gaya berat 20 N ke bawah, tetapi meja mendorong 20 N ke atas, jadi resultannya 0 N dan balok tidak bergerak.'),
+  ],
+  visuals: [
+    { title: 'Coba: gaya, massa, percepatan', text: 'Ubah massa dan gaya, lalu geser waktu atau tekan Jalankan. Model ini satu dimensi, massa tetap, tanpa gesekan, dan benda mulai dari diam.', build: forceMotionVisual },
+    { title: 'Coba: massa dan berat', text: 'Massa tetap di mana pun. Gaya berat W = m × g mengikuti gravitasi lokasi, jadi nilai g harus dinyatakan. Nilai g di sini bisa kamu ubah.', build: forceWeightVisual },
+  ],
+  unitsContent: () => [
+    h('p', {}, 'Faktor di tabel menjawab: 1 satuan ini sama dengan berapa newton?'),
+    unitTable('force', FORCE_USES, false),
+    pitfallBox('kg adalah massa, kgf adalah gaya.', 'Satuan inti gaya di sini adalah N, kN, kgf, dan lbf. Tidak ada konversi langsung kg ke N: itu bukan penggantian satuan, melainkan perhitungan W = m × g yang butuh nilai g.'),
+    h('p', {}, 'Faktor kgf dan lbf bisa diturunkan dari definisinya: gaya berat massa 1 satuan di gravitasi standar g = 9,80665 m/s².'),
+    exampleCard({ title: 'Asal angka kgf', problem: 'Gaya berat massa 1 kg pada g = 9,80665 m/s². Berapa N?', solution: () => Core.newtonSteps(1, 9.80665), note: 'Itu definisi 1 kgf = 9,80665 N, jadi faktor kgf tetap.' }),
+    exampleCard({ title: 'Asal angka lbf', problem: 'Gaya berat massa 1 pound (0,45359237 kg) pada g = 9,80665 m/s². Berapa N?', solution: () => Core.newtonSteps(0.45359237, 9.80665), note: 'Hasilnya 4,4482216 N, yaitu 1 lbf.' }),
+  ],
+  examples: [
+    { title: 'Contoh 1: hukum Newton II', problem: 'Benda bermassa 2 kg mengalami percepatan 3 m/s². Berapa gaya resultannya?', solution: () => Core.newtonSteps(2, 3) },
+    { title: 'Contoh 2: kgf ke N', problem: 'Ubah 5 kgf ke N.', solution: () => Core.convertSteps('force', 5, 'kgf', 'N') },
+    { title: 'Contoh 3: lbf ke kN', problem: 'Ubah 500 lbf ke kN.', solution: () => Core.convertSteps('force', 500, 'lbf', 'kN') },
+    { title: 'Contoh 4: gaya berat di Bumi', problem: 'Massa 70 kg, g = 9,80665 m/s². Berapa gaya beratnya?', solution: () => Core.weightSteps(70, 9.80665, 'Bumi, gravitasi standar') },
+    { title: 'Contoh 5: gaya berat di Bulan', problem: 'Massa yang sama, 70 kg, di Bulan dengan g ≈ 1,62 m/s² (pendekatan). Berapa gaya beratnya?', solution: () => Core.weightSteps(70, 1.62, 'Bulan, pendekatan'), note: 'Massa tetap 70 kg; hanya gaya beratnya yang turun menjadi sekitar seperenam.' },
+  ],
+  pitfalls: [
+    ['Jangan menyamakan kg dengan N.', '1 kg ≠ 9,8 N. Yang sama dengan 9,8 N adalah gaya berat massa 1 kg di Bumi, yaitu 1 kgf.'],
+    ['Berat bukan massa.', 'Massa (kg) tidak berubah ketika pindah tempat. Gaya berat (N) berubah mengikuti g.'],
+    ['Gunakan gaya resultan pada F = m × a.', 'Jumlahkan semua gaya (dengan arah) lebih dulu. Benda diam punya resultan 0 N walau ada gaya berat.'],
+  ],
+  advanced: () => [
+    h('p', {}, 'Dua satuan tambahan ada di konverter Python repository ini: dyne dan kip.'),
+    unitTable('force', FORCE_USES, true),
+    Converter('force', { value: 1, from: 'kip', to: 'lbf', advanced: true }),
+    pythonSection({
+      python: {
+        text: 'Polanya sama persis dengan tekanan: dictionary faktor ke newton, lalu kali faktor asal dan bagi faktor tujuan. Tidak ada kg di sini karena kg bukan satuan gaya.',
+        file: 'converters/force.py',
+        code: 'FACTORS = {\n    "N": 1,\n    "kN": 1_000,\n    "kgf": 9.80665,\n    "lbf": 4.4482216152605,\n    "dyne": 1e-5,\n    "kip": 4_448.2216152605,\n}\n\ndef convert_force(value, from_unit, to_unit):\n    return convert_linear(value, from_unit, to_unit, FACTORS)',
+      },
+    }),
+  ],
+};
+
+PAGES.gaya = (main) => renderModule(main, MODULES.gaya);
+
+/* ---------- Modul Panjang ---------- */
+function lengthRulerVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const steps = h('div');
+  const L = sliderField({ label: 'Panjang', unit: 'cm', min: 0, max: 100, step: 1, value: 30, fieldMin: 0, fieldMax: 1e9, onChange: update });
+  function update() {
+    const r = L.read();
+    if (!r.ok) { steps.replaceChildren(h('p', { role: 'alert' }, r.error)); return; }
+    const sol = Core.convertSteps('length', r.value, 'cm', 'in');
+    const max = niceCeil(Math.max(r.value, 1));
+    const svg = s('svg', { viewBox: '0 0 480 230', role: 'img', 'aria-label': Core.fmt(r.value) + ' cm sama dengan ' + Core.fmt(sol.result) + ' in. Kedua skala mengukur batang yang sama.' });
+    svg.append(s('title', {}, 'Satu batang, penggaris cm dan inci'), s('rect', { x: 40, y: 86, width: r.value / max * 400, height: 42, class: 'tint' }));
+    for (const [y, factor, label] of [[65, 1, 'cm'], [163, 2.54, 'in']]) {
+      const tick = niceStep(max / factor, 6);
+      svg.append(s('line', { x1: 40, y1: y, x2: 440, y2: y, class: 'ln' }), s('text', { x: 445, y: y + 5, class: 'tb' }, label));
+      for (let i = 0; i * tick <= max / factor + 1e-9 && i < 20; i++) {
+        const x = 40 + i * tick * factor / max * 400;
+        svg.append(s('line', { x1: x, y1: y - 7, x2: x, y2: y + 7, class: 'ln' }), s('text', { x, y: y + (y < 100 ? -15 : 26), class: 'ts', 'text-anchor': 'middle' }, Core.fmt(i * tick, 3)));
+      }
+    }
+    svg.append(s('text', { x: 40, y: 214, class: 'tb' }, Core.fmt(r.value) + ' cm ' + Core.eqv(sol.result) + ' in'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Skala menyesuaikan input. Gambar di layar bukan penggaris ukuran fisik sebenarnya.'));
+    steps.replaceChildren(stepsList(sol.steps));
+  }
+  update();
+  return h('div', { class: 'split' }, h('div', { class: 'controls' }, L.el), h('div', { class: 'visual' }, fig), h('div', { class: 'steps-area' }, steps));
+}
+
+function lengthPowerVisual() {
+  const out = h('div');
+  const fig = h('figure', { class: 'fig' });
+  const V = numberField({ label: 'Nilai luas atau volume', value: 2, min: 0, onChange: update });
+  const from = unitSelect({ cat: 'length', label: 'Satuan panjang asal', value: 'm', onChange: update });
+  const to = unitSelect({ cat: 'length', label: 'Satuan panjang tujuan', value: 'cm', onChange: update });
+  const power = h('select', { id: uid('power'), onchange: update }, h('option', { value: 2 }, 'Luas (²)'), h('option', { value: 3 }, 'Volume (³)'));
+  function update() {
+    const v = V.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    try {
+      const p = Number(power.value);
+      const sol = Core.powerSteps(v.value, from.value, to.value, p);
+      const k = Core.CATEGORIES.length.units[from.value].f / Core.CATEGORIES.length.units[to.value].f;
+      const svg = s('svg', { viewBox: '0 0 440 270', role: 'img', 'aria-label': (p === 2 ? 'Persegi: dua sisi' : 'Kubus: tiga dimensi') + ', setiap dimensi memakai faktor ' + Core.fmt(k) });
+      svg.append(s('title', {}, 'Faktor panjang dipakai pada setiap dimensi'), s('rect', { x: 70, y: 70, width: 180, height: 150, class: 'tint' }));
+      if (p === 3) svg.append(s('path', { d: 'M70 70L130 30H310V180L250 220M250 70L310 30M250 70V220M70 70H250', class: 'ac' }));
+      svg.append(s('text', { x: 160, y: 250, class: 'tb', 'text-anchor': 'middle' }, '× ' + Core.fmt(k)), s('text', { x: 12, y: 150, class: 'tb' }, '× ' + Core.fmt(k)), s('text', { x: 350, y: 110, class: 'tb', 'text-anchor': 'middle' }, p === 2 ? 'k × k' : 'k × k × k'));
+      fig.replaceChildren(svg, h('figcaption', {}, 'Gambar skematis. Faktor tiap dimensi dikalikan, bukan ditambahkan.'));
+      out.replaceChildren(h('div', { class: 'result' }, Core.shown(sol.result), ' ', sol.unit), stepsList(sol.steps));
+    } catch (e) { out.replaceChildren(h('p', { role: 'alert', class: 'err' }, e.message)); }
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, V.el, from.el, to.el, h('div', { class: 'field' }, h('label', { for: power.id }, 'Besaran'), power)), fig, out);
+}
+
+function mixedHeightVisual() {
+  const out = h('div');
+  const feet = numberField({ label: 'Kaki (ft)', value: 5, min: 0, max: 1000, onChange: update });
+  const inches = numberField({ label: 'Inci tambahan (in)', value: 10, min: 0, max: 11.999, onChange: update });
+  function update() {
+    const f = feet.read(), i = inches.read();
+    if (!f.ok || !i.ok) { out.replaceChildren(h('p', {}, 'Perbaiki isian yang bertanda merah.')); return; }
+    const sol = Core.feetInchesSteps(f.value, i.value);
+    out.replaceChildren(h('div', { class: 'result' }, Core.shown(sol.result), ' cm'), stepsList(sol.steps));
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, feet.el, inches.el), out);
+}
+
+const LENGTH_USES = { mm: 'Komponen kecil.', cm: 'Ukuran benda sehari-hari.', m: 'Satuan dasar SI.', km: 'Jarak perjalanan.', in: 'Layar dan komponen.', ft: 'Tinggi dan konstruksi.', mi: 'Jarak di AS.', nm: 'Skala sangat kecil.', um: 'Mikrometer; kunci kode: um.', yd: '1 yd = 3 ft.', nmi: 'Navigasi laut dan udara.' };
+MODULES.panjang = {
+  id: 'panjang', cat: 'length', kicker: 'Modul 3', title: 'Panjang', lead: 'Bendanya tetap sama. Ukuran satuannya menentukan berapa banyak unit yang diperlukan.',
+  converter: { value: 5, from: 'ft', to: 'cm' }, quiz: () => Quiz(QUIZ.panjang, { startRetry: takeRetry('panjang') }),
+  understand: () => [h('p', {}, 'Panjang adalah jarak antara dua titik. Satuan dasar SI-nya meter (m). Pada sistem metrik, milli berarti seperseribu, centi seperseratus, dan kilo seribu.'), h('div', { class: 'formula-box' }, '1 m = 100 cm = 1.000 mm; 1 km = 1.000 m'), h('p', {}, 'Jembatan ke satuan imperial adalah 1 in = 2,54 cm tepat. Dari sana: 1 ft = 12 in dan 1 mi = 5.280 ft.')],
+  visuals: [
+    { title: 'Coba: penggaris ganda', text: 'Satu batang diukur dengan dua penggaris. Mengganti satuan tidak mengubah panjang batang.', build: lengthRulerVisual },
+    { title: 'Coba: luas dan volume', text: 'Panjang memakai faktor satu kali, luas dua kali, volume tiga kali. Pilih besaran dan lihat langkahnya.', build: lengthPowerVisual },
+    { title: 'Coba: kaki dan inci', text: '5 ft 10 in berarti 5 kaki ditambah 10 inci. Ubah komponennya di bawah.', build: mixedHeightVisual },
+  ],
+  unitsContent: () => [unitTable('length', LENGTH_USES, false), h('p', {}, '1 ft = 12 × 0,0254 m = 0,3048 m. 1 mi = 5.280 × 0,3048 m = 1.609,344 m. Faktor cm adalah 0,01 karena 1 cm = 0,01 m.')],
+  examples: [
+    { title: 'Contoh 1: metrik', problem: '250 cm → m', solution: () => Core.convertSteps('length', 250, 'cm', 'm') },
+    { title: 'Contoh 2: lintas keluarga', problem: '5 ft → cm', solution: () => Core.convertSteps('length', 5, 'ft', 'cm') },
+    { title: 'Contoh 3: jarak perjalanan', problem: '100 mi → km', solution: () => Core.convertSteps('length', 100, 'mi', 'km') },
+    { title: 'Contoh 4: tinggi gabungan', problem: '5 ft 10 in → cm', solution: () => Core.feetInchesSteps(5, 10) },
+    { title: 'Contoh 5: luas', problem: '2 m² → cm²', solution: () => Core.powerSteps(2, 'm', 'cm', 2) },
+    { title: 'Contoh 6: volume', problem: '1 m³ → cm³', solution: () => Core.powerSteps(1, 'm', 'cm', 3) },
+  ],
+  pitfalls: [['Arah faktor.', 'cm = 0,01 dalam tabel berperantara meter; angka 100 adalah jumlah cm dalam 1 m.'], ['Luas dan volume.', '1 m² = 10.000 cm² dan 1 m³ = 1.000.000 cm³. Jangan memakai faktor panjang sekali saja.'], ['Kaki dan inci.', '5 ft 10 in bukan 5,10 ft. Jumlahkan kaki × 12 dan inci terlebih dahulu.']],
+  advanced: () => [unitTable('length', LENGTH_USES, true), Converter('length', { value: 1, from: 'nmi', to: 'km', advanced: true }), pythonSection({ python: { text: 'Semua satuan dinormalisasi ke meter. Faktor asal dikali, faktor tujuan dibagi.', file: 'converters/length.py', code: 'FACTORS = {"cm": 0.01, "m": 1, "in": 0.0254, "ft": 0.3048}\n# Cuplikan; tabel lengkap ada di converters/length.py\nresult = value * factors[from_unit] / factors[to_unit]' } })],
+};
+PAGES.panjang = (main) => renderModule(main, MODULES.panjang);
+
+/* ---------- Modul Suhu ---------- */
+function temperatureVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div');
+  const value = sliderField({ label: 'Titik suhu', unit: '°C', min: -273.15, max: 150, step: 0.01, value: 25, fieldMin: -273.15, fieldMax: 1e6, onChange: update });
+  function update() {
+    const v = value.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    const sol = Core.temperatureSteps(v.value, 'C', 'F');
+    const low = Math.min(-20, v.value - 10), high = Math.max(110, v.value + 10);
+    const y = (c) => 260 - (c - low) / (high - low) * 210;
+    const svg = s('svg', { viewBox: '0 0 480 330', role: 'img', 'aria-label': Core.fmt(v.value) + ' °C = ' + Core.fmt(sol.result) + ' °F = ' + Core.fmt(Core.convertTemperature(v.value, 'C', 'K')) + ' K' });
+    svg.append(s('title', {}, 'Tiga termometer untuk satu suhu'));
+    ['C', 'F', 'K'].forEach((unit, i) => {
+      const x = 70 + i * 150, n = Core.convertTemperature(v.value, 'C', unit);
+      svg.append(s('text', { x, y: 24, class: 'tb', 'text-anchor': 'middle' }, Core.TEMP_UNITS[unit].label), s('rect', { x: x - 12, y: 45, width: 24, height: 220, rx: 12, class: 'soft' }), s('rect', { x: x - 7, y: y(v.value), width: 14, height: 270 - y(v.value), rx: 7, class: 'acf' }), s('circle', { cx: x, cy: 272, r: 17, class: 'acf' }), s('text', { x, y: 314, class: 'tm', 'text-anchor': 'middle' }, Core.fmt(n, 6) + ' ' + Core.TEMP_UNITS[unit].label));
+      for (const c of [0, 100]) {
+        if (Math.abs(y(0) - y(100)) < 24) continue;
+        svg.append(s('line', { x1: x + 15, y1: y(c), x2: x + 30, y2: y(c), class: 'ln' }), s('text', { x: x + 32, y: y(c) + 4, class: 'ts' }, Core.fmt(Core.convertTemperature(c, 'C', unit), 5)));
+      }
+    });
+    fig.replaceChildren(svg, h('figcaption', {}, 'Garis acuan: beku dan didih air sekitar tekanan 1 atm. Skala gambar menyesuaikan rentang suhu; jarak satu interval C sama dengan K.'));
+    out.replaceChildren(stepsList(sol.steps), h('div', { class: 'formula-box' }, 'K = C + 273,15 = ' + Core.fmt(v.value) + ' + 273,15 ' + Core.eqv(Core.convertTemperature(v.value, 'C', 'K')) + ' K'));
+  }
+  update();
+  return h('div', { class: 'split' }, h('div', { class: 'controls' }, value.el), h('div', { class: 'visual' }, fig), h('div', { class: 'steps-area' }, out));
+}
+
+function temperatureDeltaVisual() {
+  const out = h('div');
+  const fig = h('figure', { class: 'fig' });
+  const value = numberField({ label: 'Nilai suhu atau perubahannya', value: 10, onChange: update });
+  const from = unitSelect({ cat: 'temperature', label: 'Satuan asal', value: 'C', onChange: update });
+  const to = unitSelect({ cat: 'temperature', label: 'Satuan tujuan', value: 'F', onChange: update });
+  const mode = h('select', { id: uid('mode'), onchange: update }, h('option', { value: 'delta' }, 'Perubahan suhu (ΔT)'), h('option', { value: 'point' }, 'Titik suhu (T)'));
+  function update() {
+    const v = value.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    try {
+      const delta = mode.value === 'delta';
+      const sol = delta ? Core.deltaSteps(v.value, from.value, to.value) : Core.temperatureSteps(v.value, from.value, to.value);
+      const a = Core.TEMP_UNITS[from.value].label, b = sol.unit;
+      const svg = s('svg', { viewBox: '0 0 480 180', role: 'img', 'aria-label': (delta ? 'Perubahan ' : 'Titik suhu ') + Core.fmt(v.value) + ' ' + a + ' setara ' + Core.fmt(sol.result) + ' ' + b });
+      svg.append(s('title', {}, delta ? 'Bandingkan selisih, bukan titik nol' : 'Bandingkan titik suhu'), s('line', { x1: 40, y1: 60, x2: 440, y2: 60, class: 'ln' }), s('line', { x1: 40, y1: 140, x2: 440, y2: 140, class: 'ln' }));
+      for (const [y, n, u] of [[60, v.value, a], [140, sol.result, b]]) {
+        if (delta) svg.append(s('circle', { cx: 100, cy: y, r: 6, class: 'acf' }), s('circle', { cx: 350, cy: y, r: 6, class: 'acf' }));
+        else svg.append(s('circle', { cx: 225, cy: y, r: 6, class: 'acf' }));
+        svg.append(s('text', { x: 225, y: y - 16, class: 'tb', 'text-anchor': 'middle' }, (delta ? 'Δ = ' : 'T = ') + Core.shown(n) + ' ' + u));
+      }
+      fig.replaceChildren(svg, h('figcaption', {}, delta ? 'Dua penanda menunjukkan awal dan akhir perubahan. Jarak skematis, angka menyatakan selisih. Tanpa offset.' : 'Penanda menunjukkan dua skala untuk satu titik suhu. Konversi memakai offset yang sesuai.'));
+      out.replaceChildren(h('div', { class: 'result' }, (delta ? 'ΔT ' : 'T '), Core.eqv(sol.result), ' ', sol.unit), stepsList(sol.steps));
+    } catch (e) { out.replaceChildren(h('p', { class: 'err', role: 'alert' }, e.message)); }
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, value.el, from.el, to.el, h('div', { class: 'field' }, h('label', { for: mode.id }, 'Apa yang dikonversi?'), mode)), fig, out);
+}
+
+MODULES.suhu = {
+  id: 'suhu', cat: 'temperature', kicker: 'Modul 4', title: 'Suhu', lead: 'Ukuran interval dan titik nol skala bisa berbeda. Itu sebabnya suhu membutuhkan perkalian dan pergeseran.',
+  converter: { value: 300, from: 'K', to: 'F' }, quiz: () => Quiz(QUIZ.suhu, { startRetry: takeRetry('suhu') }),
+  understand: () => [h('p', {}, 'Suhu menyatakan keadaan termal dan menentukan arah perpindahan kalor: dari suhu lebih tinggi ke lebih rendah. Gerak termal partikel membantu membayangkannya, terutama pada gas. Kalor adalah energi yang berpindah akibat perbedaan suhu.'), h('p', {}, 'Celsius dan kelvin punya ukuran interval yang sama, tetapi titik nolnya berbeda. Fahrenheit membagi rentang yang sama menjadi lebih banyak interval.'), h('div', { class: 'formula-box' }, '0 °C = 32 °F = 273,15 K; 100 °C = 212 °F = 373,15 K'), h('p', {}, 'Titik beku/didih air ini menjadi acuan sekitar 1 atm; titik didih berubah jika tekanannya berubah. Kelvin adalah satuan dasar SI untuk suhu termodinamik. Celsius hanya perantara hitungan kode ini.')],
+  visuals: [
+    { title: 'Coba: tiga termometer', text: 'Geser suhu Celsius. Ketiga termometer menggambarkan suhu yang sama dalam tiga skala.', build: temperatureVisual },
+    { title: 'Coba: titik atau perubahan?', text: 'Bandingkan 10 °C sebagai titik suhu dan kenaikan 10 °C. Hasilnya 50 °F dan 18 °F: dua pertanyaan yang berbeda.', build: temperatureDeltaVisual },
+  ],
+  unitsContent: () => [h('div', { class: 'table-wrap' }, h('table', { class: 'data' }, h('thead', {}, h('tr', {}, ['Skala', 'Beku air', 'Didih air', 'Nol mutlak'].map((x) => h('th', {}, x)))), h('tbody', {}, ['C', 'F', 'K'].map((u) => h('tr', {}, h('td', {}, Core.TEMP_UNITS[u].label), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].freeze)), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].boil)), h('td', {}, Core.fmt(Core.convertTemperature(0, 'K', u)))))))), h('p', {}, 'Celsius punya 100 interval dari 0 ke 100. Fahrenheit punya 212 − 32 = 180 interval. Maka rasio ukuran intervalnya 180/100 = 9/5 = 1,8.'), h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9; K = C + 273,15'), h('p', {}, 'Ke Fahrenheit: ubah skala dahulu, lalu geser +32. Untuk membaliknya, urutan operasinya dibalik: kurangi 32 dahulu, baru kali 5/9.')],
+  examples: [
+    { title: 'Contoh 1: Celsius ke Fahrenheit', problem: '25 °C → °F', solution: () => Core.temperatureSteps(25, 'C', 'F') },
+    { title: 'Contoh 2: Fahrenheit ke Celsius', problem: '98,6 °F → °C', solution: () => Core.temperatureSteps(98.6, 'F', 'C') },
+    { title: 'Contoh 3: lewat Celsius', problem: '300 K → °F', solution: () => Core.temperatureSteps(300, 'K', 'F') },
+    { title: 'Contoh 4: nol mutlak', problem: '0 K → °F', solution: () => Core.temperatureSteps(0, 'K', 'F') },
+    { title: 'Contoh 5: kenaikan suhu', problem: 'Naik 10 °C. Naik berapa °F?', solution: () => Core.deltaSteps(10, 'C', 'F') },
+  ],
+  pitfalls: [['Titik berbeda dari selisih.', 'Offset +32 dipakai untuk titik suhu Celsius ke Fahrenheit, tetapi tidak untuk selisih suhu.'], ['Kelvin tanpa derajat.', 'Tulis 273,15 K, bukan °K. Perubahan 1 K sama besar dengan perubahan 1 °C.'], ['Nol mutlak.', 'Dalam model pengantar ini titik suhu tidak boleh di bawah 0 K. Perubahan negatif tetap boleh: itu berarti pendinginan.']],
+  advanced: () => [h('p', {}, 'Rankine (°R) memakai nol mutlak dan ukuran interval Fahrenheit. Di sini R selalu berarti Rankine, bukan Réaumur. R = K × 9/5; K = R × 5/9.'), Converter('temperature', { value: 491.67, from: 'R', to: 'C', advanced: true }), pythonSection({ python: { text: 'Kode memakai Celsius sebagai perantara, lalu memeriksa nol mutlak. Percabangan adalah salah satu cara menulis transformasi skala dan offset.', file: 'converters/temperature.py', code: 'celsius = (value - 32) * 5 / 9  # bila asal Fahrenheit\nif celsius < -273.15 - 1e-9:\n    raise ValueError("Di bawah nol mutlak")\ncelsius = max(celsius, -273.15)\nkelvin = celsius + 273.15  # bila tujuan kelvin' } })],
+};
+PAGES.suhu = (main) => renderModule(main, MODULES.suhu);
+
+/* ---------- Rekap dan ringkasan ---------- */
+function progressSummary() {
+  const rows = ['tekanan', 'gaya', 'panjang', 'suhu'].map((topic) => {
+    const c = countStatuses(QUIZ[topic]);
+    return h('tr', {}, h('td', {}, h('a', { href: '#' + topic }, MODULES[topic].title)),
+      h('td', {}, Store.lessonDone(topic) ? 'Sudah dipelajari' : 'Belum ditandai'),
+      h('td', { class: 'n' }, c.ok + '/10'), h('td', { class: 'n' }, c.late), h('td', { class: 'n' }, c.bad + c.rev), h('td', { class: 'n' }, c.none),
+      h('td', {}, h('button', { class: 'btn secondary', type: 'button', disabled: c.bad + c.rev === 0, onclick() { pendingRetry = topic; location.hash = topic; } }, 'Ulangi soal')));
+  });
+  return h('div', { class: 'table-wrap' }, h('table', { class: 'data summary' },
+    h('thead', {}, h('tr', {}, ['Topik', 'Materi', 'Benar pertama', 'Dengan bantuan/ulang', 'Perlu diulang', 'Belum dijawab', 'Latihan'].map((x) => h('th', {}, x)))), h('tbody', {}, rows)));
+}
+
+PAGES.kuis = (main) => {
+  main.append(h('div', { class: 'page-head' }, h('h1', {}, 'Kuis gabungan dan progres'), h('p', { class: 'lead' }, '12 soal dari empat topik. Kerjakan satu per satu, buka petunjuk bila perlu, lalu pelajari pembahasannya.')),
+    section('Progres per modul', progressSummary(), h('p', { class: 'hint' }, 'Benar pertama dihitung tanpa bantuan. Jawaban benar setelah petunjuk, pembahasan, atau percobaan ulang dicatat terpisah.')),
+    section('Kuis gabungan', Quiz(QUIZ.gabungan)),
+    section('Penyimpanan progres', h('p', {}, Store.persistent() ? 'Progres disimpan pada browser ini. Data tidak menyinkronkan perangkat; akses file lokal bisa memiliki penyimpanan berbeda pada setiap browser.' : 'Penyimpanan browser tidak tersedia. Kamu tetap bisa belajar; progres hanya bertahan selama halaman ini terbuka.'),
+      h('button', { class: 'btn secondary', type: 'button', onclick() {
+        if (window.confirm('Hapus semua progres materi dan jawaban kuis pada browser ini?')) { Store.reset(); route(); announce('Semua progres sudah direset.'); }
+      } }, 'Reset semua progres')));
+};
+
+PAGES.rumus = (main) => {
+  main.append(h('div', { class: 'page-head' }, h('h1', {}, 'Rumus dan satuan'), h('p', { class: 'lead' }, 'Pegangan cepat. Buka modul terkait untuk melihat asal rumus dan contoh dengan langkah lengkap.')),
+    section('Konversi linear', h('div', { class: 'formula-box' }, 'hasil = nilai × faktor asal ÷ faktor tujuan'), h('p', {}, 'Faktor menjawab: 1 satuan ini sama dengan berapa satuan perantara? Tekanan lewat Pa, gaya lewat N, panjang lewat m.')),
+    ...['tekanan', 'gaya', 'panjang'].map((topic) => section(MODULES[topic].title,
+      h('a', { href: '#' + topic }, 'Buka modul ' + MODULES[topic].title), unitTable(MODULES[topic].cat, {}, false), h('details', {}, h('summary', {}, 'Satuan lanjutan'), unitTable(MODULES[topic].cat, {}, true)))),
+    section('Rumus konsep', h('div', { class: 'formula-box' }, 'P = F ÷ A; F = m × a; W = m × g'),
+      h('p', {}, 'P: tekanan (Pa), F: gaya normal pada rumus tekanan atau gaya resultan pada hukum Newton (N), A: luas (m²), m: massa (kg), a: percepatan (m/s²), W: gaya berat (N), g: percepatan gravitasi (m/s²).'),
+      h('div', { class: 'formula-box' }, 'P absolut = P gauge + P atmosfer (samakan satuan)'),
+      h('div', { class: 'formula-box' }, 'Luas: hasil = nilai × k²; volume: hasil = nilai × k³'), h('p', {}, 'k adalah faktor konversi panjang langsung dari satuan asal ke tujuan.')),
+    section('Suhu dan perubahan suhu', h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9'), h('div', { class: 'formula-box' }, 'K = C + 273,15; C = K − 273,15; R = K × 9/5'),
+      h('p', {}, 'R di sini Rankine. Untuk perubahan suhu: ΔF = ΔC × 9/5, ΔC = ΔF × 5/9, ΔK = ΔC. Offset tidak dipakai.'), h('p', {}, 'Nol mutlak: 0 K = −273,15 °C = −459,67 °F. Batas ini untuk titik suhu, bukan perubahan suhu.'), h('a', { href: '#suhu' }, 'Buka modul Suhu')),
+    section('Acuan dan cara memakai', h('p', {}, 'Faktor disamakan dengan converters/pressure.py, force.py, length.py, dan temperature.py pada repository ini. Definisi satuan mengikuti SI dan tabel konversi NIST SP 811; rujukan lengkap ada di docs/10-sumber.md.'), h('p', {}, 'Gunakan koma atau titik untuk desimal tanpa pemisah ribuan: 1,5 atau 1.5. Untuk seribu tulis 1000. Hasil memakai format Indonesia; ≈ berarti pembulatan.'), h('p', {}, 'Kamu bisa membuka semua modul tanpa urutan wajib. File ini tidak memanggil layanan AI atau mengirim jawaban ke server.')));
+};
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  nav.replaceChildren(...ROUTES.map((r) => h('a', { href: '#' + r.id, 'data-route': r.id }, r.label)));
+}
+
+function route() {
+  const id = location.hash.slice(1);
+  const current = ROUTES.find((r) => r.id === id) || ROUTES[0];
+  document.body.dataset.topic = current.topic;
+  document.title = current.label + ' · Belajar Konversi Satuan';
+  for (const a of document.querySelectorAll('#nav a')) {
+    if (a.dataset.route === current.id) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+  const main = document.getElementById('utama');
+  main.replaceChildren();
+  const render = PAGES[current.id];
+  if (render) render(main);
+  else main.append(h('p', {}, 'Halaman ini sedang disusun.'));
+  window.scrollTo(0, 0);
+  announce('Membuka halaman ' + current.label);
+}
+
+function boot() {
+  buildNav();
+  document.getElementById('skip').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('utama').focus();
+  });
+  window.addEventListener('hashchange', route);
+  route();
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
