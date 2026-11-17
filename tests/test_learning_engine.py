@@ -183,7 +183,15 @@ def test_negative_gauge_above_vacuum_is_valid():
 
 @pytest.mark.parametrize(
     "text,expected",
-    [("1,5", 1.5), ("1.5", 1.5), ("0,001", 0.001), ("-3,25", -3.25), ("1e3", 1000), (" 12 ", 12)],
+    [
+        ("1,5", 1.5),
+        ("1.5", 1.5),
+        ("0,001", 0.001),
+        ("-3,25", -3.25),
+        ("3,307", 3.307),
+        ("1e3", 1000),
+        (" 12 ", 12),
+    ],
 )
 def test_parse_accepts_decimal_comma_and_point(text, expected):
     assert run_js([{"op": "parse", "text": text}])[0]["value"]["value"] == expected

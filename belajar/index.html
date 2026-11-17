@@ -339,10 +339,11 @@ const Core = (function () {
     const intPart = m[2];
     const sep = m[3];
     const frac = m[4];
-    if (sep && frac.length === 3 && intPart !== '' && intPart !== '0' && m[5] === undefined) {
+    /* Titik + tepat 3 digit lazim berarti ribuan di Indonesia; koma selalu desimal. */
+    if (sep === '.' && frac.length === 3 && intPart !== '' && intPart !== '0' && m[5] === undefined) {
       return fail(
-        'Angka "' + raw + '" ambigu (ribuan atau desimal?). Tulis ' + intPart + ' jika maksudnya ' +
-        intPart + ' koma ' + frac + ', atau tulis ' + intPart + frac + ' jika maksudnya ribuan.'
+        'Angka "' + raw + '" ambigu (ribuan atau desimal?). Untuk desimal pakai koma: ' + intPart + ',' + frac +
+        '. Untuk ribuan tulis ' + intPart + frac + ' tanpa titik.'
       );
     }
     const normalized = m[1] + (intPart || '0') + (frac ? '.' + frac : '') + (m[5] !== undefined ? 'e' + m[5] : '');
