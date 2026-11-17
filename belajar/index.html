@@ -905,6 +905,10 @@ const QUIZ = (function () {
     conv('suhu-10', 'suhu', 'gabungan', 'temperature', 300, 'K', 'F', 2, '300 − 273,15 = 26,85 °C. Lalu kali 9/5 dan tambah 32.'),
   ];
 
+  // ID terpisah: jawaban kuis gabungan tidak mengubah skor kuis modul.
+  sets.gabungan = ['tekanan', 'gaya', 'panjang', 'suhu'].flatMap((topic) =>
+    [0, 5, 9].map((index) => Object.assign({}, sets[topic][index], { id: 'gabungan-' + topic + '-' + index })));
+
   return sets;})();
 </script>
 
@@ -1380,6 +1384,8 @@ const Store = (function () {
   return {
     get: (id) => state.quiz[id] || null,
     persistent: () => persistent,
+    lessonDone: (id) => !!(state.lessons && state.lessons[id]),
+    markLesson(id) { if (!state.lessons) state.lessons = {}; state.lessons[id] = true; save(); },
     /* Jawaban pertama dicatat sekali; periksa ulang tidak mengubahnya. */
     recordCheck(id, ok) {
       const r = rec(id);
@@ -1623,7 +1629,9 @@ function renderModule(main, def) {
   }
   main.append(
     h('div', { class: 'page-head' }, h('div', { class: 'kicker' }, def.kicker), h('h1', {}, def.title), h('p', { class: 'lead' }, def.lead), toc),
-    body);
+    body,
+    h('button', { class: 'btn', type: 'button', onclick(e) { Store.markLesson(def.id); e.currentTarget.textContent = '✓ Materi sudah dipelajari'; announce('Progres materi disimpan.'); } }, Store.lessonDone(def.id) ? '✓ Materi sudah dipelajari' : 'Tandai materi sudah dipelajari'),
+    h('p', { class: 'hint' }, 'Penanda ini mencatat bacaanmu; skor kuis tetap berdasarkan jawaban. Lihat rekap di Kuis gabungan.'));
 }
 
 /* ---------- Modul Tekanan ---------- */
@@ -2226,6 +2234,43 @@ MODULES.suhu = {
   advanced: () => [h('p', {}, 'Rankine (°R) memakai nol mutlak dan ukuran interval Fahrenheit. Di sini R selalu berarti Rankine, bukan Réaumur. R = K × 9/5; K = R × 5/9.'), Converter('temperature', { value: 491.67, from: 'R', to: 'C', advanced: true }), pythonSection({ python: { text: 'Kode memakai Celsius sebagai perantara, lalu memeriksa nol mutlak. Percabangan adalah salah satu cara menulis transformasi skala dan offset.', file: 'converters/temperature.py', code: 'celsius = (value - 32) * 5 / 9  # bila asal Fahrenheit\nif celsius < -273.15 - 1e-9:\n    raise ValueError("Di bawah nol mutlak")\ncelsius = max(celsius, -273.15)\nkelvin = celsius + 273.15  # bila tujuan kelvin' } })],
 };
 PAGES.suhu = (main) => renderModule(main, MODULES.suhu);
+
+/* ---------- Rekap dan ringkasan ---------- */
+function progressSummary() {
+  const rows = ['tekanan', 'gaya', 'panjang', 'suhu'].map((topic) => {
+    const c = countStatuses(QUIZ[topic]);
+    return h('tr', {}, h('td', {}, h('a', { href: '#' + topic }, MODULES[topic].title)),
+      h('td', {}, Store.lessonDone(topic) ? 'Sudah dipelajari' : 'Belum ditandai'),
+      h('td', { class: 'n' }, c.ok + '/10'), h('td', { class: 'n' }, c.late), h('td', { class: 'n' }, c.bad + c.rev), h('td', { class: 'n' }, c.none),
+      h('td', {}, h('button', { class: 'btn secondary', type: 'button', disabled: c.bad + c.rev === 0, onclick() { pendingRetry = topic; location.hash = topic; } }, 'Ulangi soal')));
+  });
+  return h('div', { class: 'table-wrap' }, h('table', { class: 'data summary' },
+    h('thead', {}, h('tr', {}, ['Topik', 'Materi', 'Benar pertama', 'Dengan bantuan/ulang', 'Perlu diulang', 'Belum dijawab', 'Latihan'].map((x) => h('th', {}, x)))), h('tbody', {}, rows)));
+}
+
+PAGES.kuis = (main) => {
+  main.append(h('div', { class: 'page-head' }, h('h1', {}, 'Kuis gabungan dan progres'), h('p', { class: 'lead' }, '12 soal dari empat topik. Kerjakan satu per satu, buka petunjuk bila perlu, lalu pelajari pembahasannya.')),
+    section('Progres per modul', progressSummary(), h('p', { class: 'hint' }, 'Benar pertama dihitung tanpa bantuan. Jawaban benar setelah petunjuk, pembahasan, atau percobaan ulang dicatat terpisah.')),
+    section('Kuis gabungan', Quiz(QUIZ.gabungan)),
+    section('Penyimpanan progres', h('p', {}, Store.persistent() ? 'Progres disimpan pada browser ini. Data tidak menyinkronkan perangkat; akses file lokal bisa memiliki penyimpanan berbeda pada setiap browser.' : 'Penyimpanan browser tidak tersedia. Kamu tetap bisa belajar; progres hanya bertahan selama halaman ini terbuka.'),
+      h('button', { class: 'btn secondary', type: 'button', onclick() {
+        if (window.confirm('Hapus semua progres materi dan jawaban kuis pada browser ini?')) { Store.reset(); route(); announce('Semua progres sudah direset.'); }
+      } }, 'Reset semua progres')));
+};
+
+PAGES.rumus = (main) => {
+  main.append(h('div', { class: 'page-head' }, h('h1', {}, 'Rumus dan satuan'), h('p', { class: 'lead' }, 'Pegangan cepat. Buka modul terkait untuk melihat asal rumus dan contoh dengan langkah lengkap.')),
+    section('Konversi linear', h('div', { class: 'formula-box' }, 'hasil = nilai × faktor asal ÷ faktor tujuan'), h('p', {}, 'Faktor menjawab: 1 satuan ini sama dengan berapa satuan perantara? Tekanan lewat Pa, gaya lewat N, panjang lewat m.')),
+    ...['tekanan', 'gaya', 'panjang'].map((topic) => section(MODULES[topic].title,
+      h('a', { href: '#' + topic }, 'Buka modul ' + MODULES[topic].title), unitTable(MODULES[topic].cat, {}, false), h('details', {}, h('summary', {}, 'Satuan lanjutan'), unitTable(MODULES[topic].cat, {}, true)))),
+    section('Rumus konsep', h('div', { class: 'formula-box' }, 'P = F ÷ A; F = m × a; W = m × g'),
+      h('p', {}, 'P: tekanan (Pa), F: gaya normal pada rumus tekanan atau gaya resultan pada hukum Newton (N), A: luas (m²), m: massa (kg), a: percepatan (m/s²), W: gaya berat (N), g: percepatan gravitasi (m/s²).'),
+      h('div', { class: 'formula-box' }, 'P absolut = P gauge + P atmosfer (samakan satuan)'),
+      h('div', { class: 'formula-box' }, 'Luas: hasil = nilai × k²; volume: hasil = nilai × k³'), h('p', {}, 'k adalah faktor konversi panjang langsung dari satuan asal ke tujuan.')),
+    section('Suhu dan perubahan suhu', h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9'), h('div', { class: 'formula-box' }, 'K = C + 273,15; C = K − 273,15; R = K × 9/5'),
+      h('p', {}, 'R di sini Rankine. Untuk perubahan suhu: ΔF = ΔC × 9/5, ΔC = ΔF × 5/9, ΔK = ΔC. Offset tidak dipakai.'), h('p', {}, 'Nol mutlak: 0 K = −273,15 °C = −459,67 °F. Batas ini untuk titik suhu, bukan perubahan suhu.'), h('a', { href: '#suhu' }, 'Buka modul Suhu')),
+    section('Acuan dan cara memakai', h('p', {}, 'Faktor disamakan dengan converters/pressure.py, force.py, length.py, dan temperature.py pada repository ini. Definisi satuan mengikuti SI dan tabel konversi NIST SP 811; rujukan lengkap ada di docs/10-sumber.md.'), h('p', {}, 'Gunakan koma atau titik untuk desimal tanpa pemisah ribuan: 1,5 atau 1.5. Untuk seribu tulis 1000. Hasil memakai format Indonesia; ≈ berarti pembulatan.'), h('p', {}, 'Kamu bisa membuka semua modul tanpa urutan wajib. File ini tidak memanggil layanan AI atau mengirim jawaban ke server.')));
+};
 
 function buildNav() {
   const nav = document.getElementById('nav');
