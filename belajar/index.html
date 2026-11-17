@@ -892,6 +892,19 @@ const QUIZ = (function () {
     calc('panjang-10', 'panjang', 'gabungan', 'Tinggi seseorang 5 ft 10 in. Berapa cm?', 'cm', 'exact', () => Core.feetInchesSteps(5, 10), 'Jumlahkan inci: 5 × 12 + 10, lalu kali 2,54.'),
   ];
 
+  sets.suhu = [
+    mc('suhu-1', 'suhu', 'konsep', 'Mengapa °C ke °F perlu +32?', ['Karena titik nol kedua skala berbeda', 'Karena Fahrenheit selalu 32 kali Celsius', 'Karena Kelvin memiliki tanda derajat'], 0, '0 °C sama dengan 32 °F.', 'Perkalian mengubah ukuran interval; +32 menyesuaikan titik nol. Karena 0 dikali berapa pun tetap 0, perkalian saja tidak dapat menghasilkan 32.'),
+    mc('suhu-2', 'suhu', 'konsep', 'Penulisan kelvin yang benar adalah...', ['273,15 °K', '273,15 K', '273,15 k'], 1, 'Kelvin tidak memakai tanda derajat.', 'Simbol kelvin adalah K, dengan huruf besar tanpa tanda derajat.'),
+    mc('suhu-3', 'suhu', 'prediksi', 'Pada rentang suhu yang sama, 100 interval °C setara berapa interval °F?', ['100', '180', '32'], 1, 'Bandingkan 0–100 °C dengan 32–212 °F.', '212 − 32 = 180 interval °F. Rasionya 180/100 = 9/5 = 1,8.'),
+    conv('suhu-4', 'suhu', 'hitungan', 'temperature', 25, 'C', 'F', 'exact', 'Kali 9/5, lalu tambah 32.'),
+    conv('suhu-5', 'suhu', 'hitungan', 'temperature', 98.6, 'F', 'C', 2, 'Kurangi 32 dahulu, baru kali 5/9.'),
+    conv('suhu-6', 'suhu', 'hitungan', 'temperature', 0, 'C', 'K', 'exact', 'Celsius ke kelvin: tambah 273,15.'),
+    conv('suhu-7', 'suhu', 'hitungan', 'temperature', 0, 'K', 'F', 2, 'Ke Celsius dahulu: −273,15 °C. Lalu ke Fahrenheit.'),
+    calc('suhu-8', 'suhu', 'jebakan', 'Suhu naik 10 °C. Berapa kenaikannya dalam °F?', '°F', 'exact', () => Core.deltaSteps(10, 'C', 'F'), 'Ini selisih: kali 9/5, tanpa +32.', [{ value: 50, msg: '50 °F adalah titik suhu 10 °C. Kenaikan hanya memakai rasio: 10 × 1,8.' }]),
+    mc('suhu-9', 'suhu', 'jebakan', 'Mana input titik suhu yang berada di bawah nol mutlak?', ['−10 °C', '0 K', '−300 °C'], 2, 'Nol mutlak = −273,15 °C.', '−300 °C lebih rendah dari −273,15 °C. −10 °C adalah suhu biasa di bawah titik beku; 0 K tepat di batas nol mutlak.'),
+    conv('suhu-10', 'suhu', 'gabungan', 'temperature', 300, 'K', 'F', 2, '300 − 273,15 = 26,85 °C. Lalu kali 9/5 dan tambah 32.'),
+  ];
+
   return sets;})();
 </script>
 
@@ -2138,6 +2151,81 @@ MODULES.panjang = {
   advanced: () => [unitTable('length', LENGTH_USES, true), Converter('length', { value: 1, from: 'nmi', to: 'km', advanced: true }), pythonSection({ python: { text: 'Semua satuan dinormalisasi ke meter. Faktor asal dikali, faktor tujuan dibagi.', file: 'converters/length.py', code: 'FACTORS = {"cm": 0.01, "m": 1, "in": 0.0254, "ft": 0.3048}\n# Cuplikan; tabel lengkap ada di converters/length.py\nresult = value * factors[from_unit] / factors[to_unit]' } })],
 };
 PAGES.panjang = (main) => renderModule(main, MODULES.panjang);
+
+/* ---------- Modul Suhu ---------- */
+function temperatureVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const out = h('div');
+  const value = sliderField({ label: 'Titik suhu', unit: '°C', min: -273.15, max: 150, step: 0.01, value: 25, fieldMin: -273.15, fieldMax: 1e6, onChange: update });
+  function update() {
+    const v = value.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    const sol = Core.temperatureSteps(v.value, 'C', 'F');
+    const low = Math.min(-20, v.value - 10), high = Math.max(110, v.value + 10);
+    const y = (c) => 260 - (c - low) / (high - low) * 210;
+    const svg = s('svg', { viewBox: '0 0 480 330', role: 'img', 'aria-label': Core.fmt(v.value) + ' °C = ' + Core.fmt(sol.result) + ' °F = ' + Core.fmt(Core.convertTemperature(v.value, 'C', 'K')) + ' K' });
+    svg.append(s('title', {}, 'Tiga termometer untuk satu suhu'));
+    ['C', 'F', 'K'].forEach((unit, i) => {
+      const x = 70 + i * 150, n = Core.convertTemperature(v.value, 'C', unit);
+      svg.append(s('text', { x, y: 24, class: 'tb', 'text-anchor': 'middle' }, Core.TEMP_UNITS[unit].label), s('rect', { x: x - 12, y: 45, width: 24, height: 220, rx: 12, class: 'soft' }), s('rect', { x: x - 7, y: y(v.value), width: 14, height: 270 - y(v.value), rx: 7, class: 'acf' }), s('circle', { cx: x, cy: 272, r: 17, class: 'acf' }), s('text', { x, y: 314, class: 'tm', 'text-anchor': 'middle' }, Core.fmt(n, 6) + ' ' + Core.TEMP_UNITS[unit].label));
+      for (const c of [0, 100]) {
+        svg.append(s('line', { x1: x + 15, y1: y(c), x2: x + 30, y2: y(c), class: 'ln' }), s('text', { x: x + 32, y: y(c) + 4, class: 'ts' }, Core.fmt(Core.convertTemperature(c, 'C', unit), 5)));
+      }
+    });
+    fig.replaceChildren(svg, h('figcaption', {}, 'Garis acuan: beku dan didih air sekitar tekanan 1 atm. Skala gambar menyesuaikan rentang suhu; jarak satu interval C sama dengan K.'));
+    out.replaceChildren(stepsList(sol.steps), h('div', { class: 'formula-box' }, 'K = C + 273,15 = ' + Core.fmt(v.value) + ' + 273,15 ' + Core.eqv(Core.convertTemperature(v.value, 'C', 'K')) + ' K'));
+  }
+  update();
+  return h('div', { class: 'split' }, h('div', { class: 'controls' }, value.el), h('div', { class: 'visual' }, fig), h('div', { class: 'steps-area' }, out));
+}
+
+function temperatureDeltaVisual() {
+  const out = h('div');
+  const fig = h('figure', { class: 'fig' });
+  const value = numberField({ label: 'Nilai suhu atau perubahannya', value: 10, onChange: update });
+  const from = unitSelect({ cat: 'temperature', label: 'Satuan asal', value: 'C', onChange: update });
+  const to = unitSelect({ cat: 'temperature', label: 'Satuan tujuan', value: 'F', onChange: update });
+  const mode = h('select', { id: uid('mode'), onchange: update }, h('option', { value: 'delta' }, 'Perubahan suhu (ΔT)'), h('option', { value: 'point' }, 'Titik suhu (T)'));
+  function update() {
+    const v = value.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    try {
+      const delta = mode.value === 'delta';
+      const sol = delta ? Core.deltaSteps(v.value, from.value, to.value) : Core.temperatureSteps(v.value, from.value, to.value);
+      const a = Core.TEMP_UNITS[from.value].label, b = sol.unit;
+      const svg = s('svg', { viewBox: '0 0 480 180', role: 'img', 'aria-label': (delta ? 'Perubahan ' : 'Titik suhu ') + Core.fmt(v.value) + ' ' + a + ' setara ' + Core.fmt(sol.result) + ' ' + b });
+      svg.append(s('title', {}, delta ? 'Bandingkan selisih, bukan titik nol' : 'Bandingkan titik suhu'), s('line', { x1: 40, y1: 60, x2: 440, y2: 60, class: 'ln' }), s('line', { x1: 40, y1: 140, x2: 440, y2: 140, class: 'ln' }));
+      for (const [y, n, u] of [[60, v.value, a], [140, sol.result, b]]) {
+        svg.append(s('circle', { cx: 100, cy: y, r: 6, class: 'acf' }), s('circle', { cx: 350, cy: y, r: 6, class: 'acf' }), s('text', { x: 225, y: y - 16, class: 'tb', 'text-anchor': 'middle' }, (delta ? 'Δ = ' : 'T = ') + Core.shown(n) + ' ' + u));
+      }
+      fig.replaceChildren(svg, h('figcaption', {}, delta ? 'Dua penanda menunjukkan awal dan akhir perubahan. Jarak skematis, angka menyatakan selisih. Tanpa offset.' : 'Penanda menunjukkan dua skala untuk satu titik suhu. Konversi memakai offset yang sesuai.'));
+      out.replaceChildren(h('div', { class: 'result' }, (delta ? 'ΔT ' : 'T '), Core.eqv(sol.result), ' ', sol.unit), stepsList(sol.steps));
+    } catch (e) { out.replaceChildren(h('p', { class: 'err', role: 'alert' }, e.message)); }
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, value.el, from.el, to.el, h('div', { class: 'field' }, h('label', { for: mode.id }, 'Apa yang dikonversi?'), mode)), fig, out);
+}
+
+MODULES.suhu = {
+  id: 'suhu', cat: 'temperature', kicker: 'Modul 4', title: 'Suhu', lead: 'Ukuran interval dan titik nol skala bisa berbeda. Itu sebabnya suhu membutuhkan perkalian dan pergeseran.',
+  converter: { value: 300, from: 'K', to: 'F' }, quiz: () => Quiz(QUIZ.suhu, { startRetry: takeRetry('suhu') }),
+  understand: () => [h('p', {}, 'Suhu menyatakan keadaan termal dan menentukan arah perpindahan kalor: dari suhu lebih tinggi ke lebih rendah. Gerak termal partikel membantu membayangkannya, terutama pada gas. Kalor adalah energi yang berpindah akibat perbedaan suhu.'), h('p', {}, 'Celsius dan kelvin punya ukuran interval yang sama, tetapi titik nolnya berbeda. Fahrenheit membagi rentang yang sama menjadi lebih banyak interval.'), h('div', { class: 'formula-box' }, '0 °C = 32 °F = 273,15 K; 100 °C = 212 °F = 373,15 K'), h('p', {}, 'Titik beku/didih air ini menjadi acuan sekitar 1 atm; titik didih berubah jika tekanannya berubah. Kelvin adalah satuan dasar SI untuk suhu termodinamik. Celsius hanya perantara hitungan kode ini.')],
+  visuals: [
+    { title: 'Coba: tiga termometer', text: 'Geser suhu Celsius. Ketiga termometer menggambarkan suhu yang sama dalam tiga skala.', build: temperatureVisual },
+    { title: 'Coba: titik atau perubahan?', text: 'Bandingkan 10 °C sebagai titik suhu dan kenaikan 10 °C. Hasilnya 50 °F dan 18 °F: dua pertanyaan yang berbeda.', build: temperatureDeltaVisual },
+  ],
+  unitsContent: () => [h('div', { class: 'table-wrap' }, h('table', { class: 'data' }, h('thead', {}, h('tr', {}, ['Skala', 'Beku air', 'Didih air', 'Nol mutlak'].map((x) => h('th', {}, x)))), h('tbody', {}, ['C', 'F', 'K'].map((u) => h('tr', {}, h('td', {}, Core.TEMP_UNITS[u].label), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].freeze)), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].boil)), h('td', {}, Core.fmt(Core.convertTemperature(0, 'K', u)))))))), h('p', {}, 'Celsius punya 100 interval dari 0 ke 100. Fahrenheit punya 212 − 32 = 180 interval. Maka rasio ukuran intervalnya 180/100 = 9/5 = 1,8.'), h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9; K = C + 273,15'), h('p', {}, 'Ke Fahrenheit: ubah skala dahulu, lalu geser +32. Untuk membaliknya, urutan operasinya dibalik: kurangi 32 dahulu, baru kali 5/9.')],
+  examples: [
+    { title: 'Contoh 1: Celsius ke Fahrenheit', problem: '25 °C → °F', solution: () => Core.temperatureSteps(25, 'C', 'F') },
+    { title: 'Contoh 2: Fahrenheit ke Celsius', problem: '98,6 °F → °C', solution: () => Core.temperatureSteps(98.6, 'F', 'C') },
+    { title: 'Contoh 3: lewat Celsius', problem: '300 K → °F', solution: () => Core.temperatureSteps(300, 'K', 'F') },
+    { title: 'Contoh 4: nol mutlak', problem: '0 K → °F', solution: () => Core.temperatureSteps(0, 'K', 'F') },
+    { title: 'Contoh 5: kenaikan suhu', problem: 'Naik 10 °C. Naik berapa °F?', solution: () => Core.deltaSteps(10, 'C', 'F') },
+  ],
+  pitfalls: [['Titik berbeda dari selisih.', 'Offset +32 dipakai untuk titik suhu Celsius ke Fahrenheit, tetapi tidak untuk selisih suhu.'], ['Kelvin tanpa derajat.', 'Tulis 273,15 K, bukan °K. Perubahan 1 K sama besar dengan perubahan 1 °C.'], ['Nol mutlak.', 'Dalam model pengantar ini titik suhu tidak boleh di bawah 0 K. Perubahan negatif tetap boleh: itu berarti pendinginan.']],
+  advanced: () => [h('p', {}, 'Rankine (°R) memakai nol mutlak dan ukuran interval Fahrenheit. Di sini R selalu berarti Rankine, bukan Réaumur. R = K × 9/5; K = R × 5/9.'), Converter('temperature', { value: 491.67, from: 'R', to: 'C', advanced: true }), pythonSection({ python: { text: 'Kode memakai Celsius sebagai perantara, lalu memeriksa nol mutlak. Percabangan adalah salah satu cara menulis transformasi skala dan offset.', file: 'converters/temperature.py', code: 'celsius = (value - 32) * 5 / 9  # bila asal Fahrenheit\nif celsius < -273.15 - 1e-9:\n    raise ValueError("Di bawah nol mutlak")\ncelsius = max(celsius, -273.15)\nkelvin = celsius + 273.15  # bila tujuan kelvin' } })],
+};
+PAGES.suhu = (main) => renderModule(main, MODULES.suhu);
 
 function buildNav() {
   const nav = document.getElementById('nav');
