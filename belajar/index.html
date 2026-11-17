@@ -443,7 +443,7 @@ const Core = (function () {
     else {
       const bigger = ratio > 1;
       check = B.label + (bigger ? ' lebih kecil dari ' : ' lebih besar dari ') + A.label +
-        ', jadi angkanya harus ' + (bigger ? 'membesar' : 'mengecil') + ': ' +
+        ', jadi ' + (value < 0 ? 'besar nilai mutlaknya' : 'angkanya') + ' harus ' + (bigger ? 'membesar' : 'mengecil') + ': ' +
         fmt(Math.abs(value)) + ' → ' + fmt(Math.abs(result)) + ' ✓';
     }
     return {
@@ -571,7 +571,7 @@ const Core = (function () {
           'Perubahan suhu hanya memakai ukuran derajat. Titik nol tidak ikut, jadi tanpa + 32 dan tanpa − 273,15.',
         ]),
         step('Substitusi', [
-          '1 °C = 1 K = 1,8 °F = 1,8 °R',
+          'Ukuran perubahan: Δ1 °C = Δ1 K = Δ1,8 °F = Δ1,8 °R',
           'Derajat ' + A.label + ' per 1 °C = ' + fmt(DELTA_PER_C[from]) + '; derajat ' + B.label + ' per 1 °C = ' + fmt(DELTA_PER_C[to]),
         ]),
         step('Hitungan antara', ['Δ ' + B.label + ' = ' + v + ' × ' + fmt(DELTA_PER_C[to]) + ' ÷ ' + fmt(DELTA_PER_C[from]) + ' ' + eqv(result)]),
@@ -657,7 +657,7 @@ const Core = (function () {
         step('Substitusi', ['P = ' + fmt(F) + ' N ÷ ' + fmt(A) + ' m²']),
         step('Hitungan antara', ['P ' + eqv(result) + ' N/m²']),
         step('Hasil akhir', ['P ' + eqv(result) + ' Pa']),
-        step('Cek masuk akal', ['Luas ' + fmt(A) + ' m² ' + (A < 1 ? 'lebih kecil dari 1 m², jadi tekanan lebih besar dari gaya (dalam angka) ✓' : 'tidak lebih kecil dari 1 m², jadi tekanan tidak lebih besar dari gaya (dalam angka) ✓')]),
+        step('Cek masuk akal', ['Untuk gaya positif yang sama, luas lebih kecil menghasilkan tekanan lebih besar. Jika gaya nol, tekanan juga nol.', 'Periksa balik: P × A = ' + fmt(result) + ' × ' + fmt(A) + ' ' + eqv(result * A) + ' N (gaya awal).']),
       ],
     };
   }
@@ -685,7 +685,7 @@ const Core = (function () {
           'Ditanya: tekanan absolut dalam ' + O + '.',
         ]),
         step('Rumus', ['P absolut = P gauge + P atmosfer', 'Samakan satuan lebih dulu, baru dijumlahkan.']),
-        step('Substitusi', ['Gauge dalam ' + O + ' = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ' × ' + fmt(U[gaugeUnit].f, 10) + ' Pa ÷ ' + fmt(U[outUnit].f, 10) + ' Pa', 'Atmosfer dalam ' + O + ' = ' + fmt(atm) + ' ' + U[atmUnit].label + ' × ' + fmt(U[atmUnit].f, 10) + ' Pa ÷ ' + fmt(U[outUnit].f, 10) + ' Pa']),
+        step('Substitusi', ['Gauge dalam ' + O + ' = ' + fmt(gauge) + ' ' + U[gaugeUnit].label + ' × ' + fmt(U[gaugeUnit].f, 10) + ' Pa/' + U[gaugeUnit].label + ' ÷ ' + fmt(U[outUnit].f, 10) + ' Pa/' + O, 'Atmosfer dalam ' + O + ' = ' + fmt(atm) + ' ' + U[atmUnit].label + ' × ' + fmt(U[atmUnit].f, 10) + ' Pa/' + U[atmUnit].label + ' ÷ ' + fmt(U[outUnit].f, 10) + ' Pa/' + O]),
         step('Hitungan antara', ['Gauge ' + eqv(g) + ' ' + O, 'Atmosfer ' + eqv(a) + ' ' + O, 'P absolut = ' + fmt(g) + ' + ' + fmt(a) + ' ' + eqv(result) + ' ' + O]),
         step('Hasil akhir', ['P absolut ' + eqv(result) + ' ' + O]),
         step('Cek masuk akal', [gauge >= 0 ? 'Tekanan absolut harus lebih besar dari tekanan gauge karena atmosfer ditambahkan ✓' : 'Gauge negatif berarti di bawah tekanan udara luar (vakum parsial); absolut tetap tidak negatif ✓']),
@@ -708,7 +708,7 @@ const Core = (function () {
         step('Substitusi', ['F = ' + fmt(mass) + ' kg × ' + fmt(accel) + ' m/s²']),
         step('Hitungan antara', ['F ' + eqv(result) + ' kg·m/s²']),
         step('Hasil akhir', ['F ' + eqv(result) + ' N']),
-        step('Cek masuk akal', ['Massa dan percepatan sama-sama positif, jadi gaya positif; massa lebih besar atau percepatan lebih besar membuat gaya lebih besar ✓']),
+        step('Cek masuk akal', ['Massa positif, jadi tanda gaya resultan mengikuti tanda percepatan. Pada massa tetap, besar gaya sebanding dengan besar percepatan.']),
       ],
     };
   }
@@ -1091,7 +1091,7 @@ function hubSvg(info) {
   ];
   for (const b of boxes) {
     svg.append(
-      s('text', { x: 10, y: b.y - 6, class: 'ts' }, b.head),
+      s('text', { x: 230, y: b.y + 32, class: 'ts' }, b.head),
       s('rect', { x: 10, y: b.y, width: 200, height: 64, rx: 10, class: b.mid ? 'tint' : 'soft' }),
       s('text', { x: 110, y: b.y + 28, 'text-anchor': 'middle', class: 'tb' }, b.main),
       s('text', { x: 110, y: b.y + 50, 'text-anchor': 'middle', class: 'ts' }, b.note));
@@ -1110,9 +1110,9 @@ function hubInfo(cat, from, to) {
     const T = Core.TEMP_UNITS;
     return {
       from: T[from].label, to: T[to].label, base: '°C',
-      fromNote: 'titik nol: ' + Core.fmt(T[from].freeze) + ' ' + T[from].label,
-      baseNote: 'titik nol: 0 °C',
-      toNote: 'titik nol: ' + Core.fmt(T[to].freeze) + ' ' + T[to].label,
+      fromNote: 'beku air: ' + Core.fmt(T[from].freeze) + ' ' + T[from].label,
+      baseNote: 'beku air: 0 °C',
+      toNote: 'beku air: ' + Core.fmt(T[to].freeze) + ' ' + T[to].label,
       step1: Core.TEMP_TO_C[from].replace('°C = ', ''),
       step2: Core.TEMP_FROM_C[to].replace(/^[^=]*= /, ''),
       aria: 'Suhu ' + T[from].label + ' diubah ke derajat Celsius, lalu ke ' + T[to].label + '.',
@@ -1683,7 +1683,10 @@ function pressureForceVisual() {
       const kPa = Core.convertLinear('pressure', sol.result, 'Pa', 'kPa');
       const bar = Core.convertLinear('pressure', sol.result, 'Pa', 'bar');
       out.replaceChildren(h('div', { class: 'result' }, 'P ', Core.eqv(sol.result), ' Pa ', Core.eqv(kPa), ' kPa ', Core.eqv(bar), ' bar'));
-      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+      stepsBox.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps),
+        h('details', {}, h('summary', {}, 'Langkah tambahan: Pa ke kPa dan bar'),
+          stepsList(Core.convertSteps('pressure', sol.result, 'Pa', 'kPa').steps),
+          stepsList(Core.convertSteps('pressure', sol.result, 'Pa', 'bar').steps)));
     } catch (e) {
       out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
       stepsBox.replaceChildren();

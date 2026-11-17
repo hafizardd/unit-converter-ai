@@ -53,6 +53,7 @@ const out = cases.map((c) => {
 process.stdout.write(JSON.stringify(out));
 """
 
+
 @pytest.fixture(autouse=True)
 def require_node():
     assert NODE, "Node.js diperlukan untuk memverifikasi mesin hitung HTML."
@@ -254,6 +255,10 @@ S.markLesson('suhu');
 const result = {revealed: S.get('revealed'), direct: S.get('direct'),
     retry: S.get('retry'), hinted: S.get('hinted'), lesson: S.lessonDone('suhu')};
 S.reset(); result.reset = S.get('direct') === null && !S.lessonDone('suhu');
+const blocked = {get localStorage() {throw Error('storage disabled');}};
+const B = new Function('window', storeCode + ';return Store;')(blocked);
+B.recordCheck('offline', true);
+result.fallback = !B.persistent() && B.get('offline').solved;
 console.log(JSON.stringify(result));
 """
     done = subprocess.run(
@@ -267,6 +272,7 @@ console.log(JSON.stringify(result));
     assert got["hinted"]["assisted"] is True
     assert got["lesson"] is True
     assert got["reset"] is True
+    assert got["fallback"] is True
 
 
 def test_answer_rounding_matches_the_requested_precision():

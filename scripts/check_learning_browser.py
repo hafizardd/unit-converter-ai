@@ -29,6 +29,8 @@ addEventListener('DOMContentLoaded', () => {
       location.hash = id; route();
       const main = document.getElementById('utama');
       assert(main.querySelector('h1'), id + ': missing heading');
+      document.getElementById('skip').click();
+      assert(document.activeElement === main, id + ': keyboard skip target failed');
       assert(!main.textContent.includes('sedang disusun'), id + ': placeholder');
       assert(!/\b(?:undefined|null|NaN|Infinity)\b/.test(main.textContent), id + ': invalid text');
       assert(document.documentElement.scrollWidth <= innerWidth + 2, id + ': page overflow: ' +
@@ -58,6 +60,11 @@ addEventListener('DOMContentLoaded', () => {
           }
           click(quiz, 'Periksa jawaban');
           assert(quiz.querySelector('.fb.ok'), q.id + ': correct answer rejected');
+          if (q.type === 'num') {
+            main.querySelector('.qcard input[type=text]').dispatchEvent(
+              new KeyboardEvent('keydown', {key:'Enter', bubbles:true}));
+            assert(Store.get(q.id).first === 'benar', q.id + ': Enter changed first score');
+          }
           click(quiz, 'Pembahasan');
           if (q.type === 'num') assert(quiz.querySelectorAll('.steps > li').length === 6, q.id + ': missing solution');
           report.questions++;
