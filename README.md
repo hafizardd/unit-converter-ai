@@ -53,6 +53,13 @@ Mulai ulang aplikasi setelah mengubah `.env`.
 9. [Latihan dan petunjuk jawaban](docs/09-latihan-mandiri.md)
 10. [Sumber resmi](docs/10-sumber.md)
 
+## Rencana media belajar interaktif
+
+[Rencana modul HTML interaktif](docs/11-rencana-belajar-interaktif.md) memuat
+tekanan, gaya, panjang, dan suhu: visualisasi, contoh dengan langkah rumus,
+konverter, serta kuis satu per satu. Dokumen ini masih tahap rencana untuk
+ditinjau; file HTML belum dibuat.
+
 ## Tambahan dari versi workshop
 
 Package `converters/`, `ai/`, dan `ui/`, satuan tambahan, validasi, tabel perbandingan,
