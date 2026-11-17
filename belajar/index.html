@@ -879,6 +879,19 @@ const QUIZ = (function () {
       ]),
   ];
 
+  sets.panjang = [
+    mc('panjang-1', 'panjang', 'konsep', 'Sebuah meja panjangnya 1 m. Ketika ditulis menjadi 100 cm, apa yang berubah?', ['Hanya angka dan satuannya', 'Mejanya menjadi lebih panjang', 'Panjang fisiknya berubah'], 0, 'Apakah mengganti penggaris mengubah meja?', 'Besaran panjangnya tetap. Satuan yang lebih kecil membutuhkan jumlah unit yang lebih banyak.'),
+    mc('panjang-2', 'panjang', 'konsep', 'Faktor cm pada tabel dengan perantara meter adalah...', ['100', '0,01', '1.000'], 1, 'Tanyakan: 1 cm sama dengan berapa meter?', '1 cm = 0,01 m, sehingga faktor cm adalah 0,01. Angka 100 menjawab pertanyaan sebaliknya: berapa cm dalam 1 m.'),
+    mc('panjang-3', 'panjang', 'prediksi', '5 ft diubah ke cm. Angkanya akan...', ['Membesar', 'Mengecil', 'Tetap'], 0, '1 ft = 30,48 cm. Mana satuan yang lebih kecil?', 'cm lebih kecil dari ft. Untuk panjang positif yang sama, jumlah cm lebih banyak daripada jumlah ft.'),
+    conv('panjang-4', 'panjang', 'hitungan', 'length', 250, 'cm', 'm', 'exact', 'Kali 0,01 untuk mendapat meter.'),
+    conv('panjang-5', 'panjang', 'hitungan', 'length', 5, 'ft', 'cm', 'exact', 'Ke m: × 0,3048. Dari m ke cm: ÷ 0,01.'),
+    conv('panjang-6', 'panjang', 'hitungan', 'length', 100, 'mi', 'km', 2, 'Ke m: × 1.609,344. Lalu ÷ 1.000 untuk km.'),
+    conv('panjang-7', 'panjang', 'hitungan', 'length', 50, 'mm', 'in', 3, 'Ke m dulu, lalu bagi 0,0254.'),
+    calc('panjang-8', 'panjang', 'jebakan', 'Ubah luas 2 m² ke cm².', 'cm²', 'exact', () => Core.powerSteps(2, 'm', 'cm', 2), '1 m = 100 cm. Untuk luas, faktor 100 dipakai dua kali.', [{ value: 200, msg: 'Itu memakai faktor panjang sekali. Luas butuh 100 × 100.' }]),
+    mc('panjang-9', 'panjang', 'jebakan', 'Tinggi 5 ft 10 in sama dengan...', ['5,10 ft', '70 in', '60 in'], 1, 'Ada 12 in dalam 1 ft. Jumlahkan inci kedua komponennya.', '5 × 12 + 10 = 70 in. Angka 10 menyatakan inci tambahan, bukan pecahan desimal kaki.'),
+    calc('panjang-10', 'panjang', 'gabungan', 'Tinggi seseorang 5 ft 10 in. Berapa cm?', 'cm', 'exact', () => Core.feetInchesSteps(5, 10), 'Jumlahkan inci: 5 × 12 + 10, lalu kali 2,54.'),
+  ];
+
   return sets;})();
 </script>
 
@@ -2033,6 +2046,98 @@ MODULES.gaya = {
 };
 
 PAGES.gaya = (main) => renderModule(main, MODULES.gaya);
+
+/* ---------- Modul Panjang ---------- */
+function lengthRulerVisual() {
+  const fig = h('figure', { class: 'fig' });
+  const steps = h('div');
+  const L = sliderField({ label: 'Panjang', unit: 'cm', min: 0, max: 100, step: 1, value: 30, fieldMin: 0, fieldMax: 1e9, onChange: update });
+  function update() {
+    const r = L.read();
+    if (!r.ok) { steps.replaceChildren(h('p', { role: 'alert' }, r.error)); return; }
+    const sol = Core.convertSteps('length', r.value, 'cm', 'in');
+    const max = niceCeil(Math.max(r.value, 1));
+    const svg = s('svg', { viewBox: '0 0 480 230', role: 'img', 'aria-label': Core.fmt(r.value) + ' cm sama dengan ' + Core.fmt(sol.result) + ' in. Kedua skala mengukur batang yang sama.' });
+    svg.append(s('title', {}, 'Satu batang, penggaris cm dan inci'), s('rect', { x: 40, y: 86, width: r.value / max * 400, height: 42, class: 'tint' }));
+    for (const [y, factor, label] of [[65, 1, 'cm'], [163, 2.54, 'in']]) {
+      const tick = niceStep(max / factor, 6);
+      svg.append(s('line', { x1: 40, y1: y, x2: 440, y2: y, class: 'ln' }), s('text', { x: 445, y: y + 5, class: 'tb' }, label));
+      for (let i = 0; i * tick <= max / factor + 1e-9 && i < 20; i++) {
+        const x = 40 + i * tick * factor / max * 400;
+        svg.append(s('line', { x1: x, y1: y - 7, x2: x, y2: y + 7, class: 'ln' }), s('text', { x, y: y + (y < 100 ? -15 : 26), class: 'ts', 'text-anchor': 'middle' }, Core.fmt(i * tick, 3)));
+      }
+    }
+    svg.append(s('text', { x: 40, y: 214, class: 'tb' }, Core.fmt(r.value) + ' cm ' + Core.eqv(sol.result) + ' in'));
+    fig.replaceChildren(svg, h('figcaption', {}, 'Skala menyesuaikan input. Gambar di layar bukan penggaris ukuran fisik sebenarnya.'));
+    steps.replaceChildren(stepsList(sol.steps));
+  }
+  update();
+  return h('div', { class: 'split' }, h('div', { class: 'controls' }, L.el), h('div', { class: 'visual' }, fig), h('div', { class: 'steps-area' }, steps));
+}
+
+function lengthPowerVisual() {
+  const out = h('div');
+  const fig = h('figure', { class: 'fig' });
+  const V = numberField({ label: 'Nilai luas atau volume', value: 2, min: 0, onChange: update });
+  const from = unitSelect({ cat: 'length', label: 'Satuan panjang asal', value: 'm', onChange: update });
+  const to = unitSelect({ cat: 'length', label: 'Satuan panjang tujuan', value: 'cm', onChange: update });
+  const power = h('select', { id: uid('power'), onchange: update }, h('option', { value: 2 }, 'Luas (²)'), h('option', { value: 3 }, 'Volume (³)'));
+  function update() {
+    const v = V.read();
+    if (!v.ok) { out.replaceChildren(h('p', { role: 'alert' }, v.error)); return; }
+    try {
+      const p = Number(power.value);
+      const sol = Core.powerSteps(v.value, from.value, to.value, p);
+      const k = Core.CATEGORIES.length.units[from.value].f / Core.CATEGORIES.length.units[to.value].f;
+      const svg = s('svg', { viewBox: '0 0 440 270', role: 'img', 'aria-label': (p === 2 ? 'Persegi: dua sisi' : 'Kubus: tiga dimensi') + ', setiap dimensi memakai faktor ' + Core.fmt(k) });
+      svg.append(s('title', {}, 'Faktor panjang dipakai pada setiap dimensi'), s('rect', { x: 70, y: 70, width: 180, height: 150, class: 'tint' }));
+      if (p === 3) svg.append(s('path', { d: 'M70 70L130 30H310V180L250 220M250 70L310 30M250 70V220M70 70H250', class: 'ac' }));
+      svg.append(s('text', { x: 160, y: 250, class: 'tb', 'text-anchor': 'middle' }, '× ' + Core.fmt(k)), s('text', { x: 12, y: 150, class: 'tb' }, '× ' + Core.fmt(k)), s('text', { x: 350, y: 110, class: 'tb', 'text-anchor': 'middle' }, p === 2 ? 'k × k' : 'k × k × k'));
+      fig.replaceChildren(svg, h('figcaption', {}, 'Gambar skematis. Faktor tiap dimensi dikalikan, bukan ditambahkan.'));
+      out.replaceChildren(h('div', { class: 'result' }, Core.shown(sol.result), ' ', sol.unit), stepsList(sol.steps));
+    } catch (e) { out.replaceChildren(h('p', { role: 'alert', class: 'err' }, e.message)); }
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, V.el, from.el, to.el, h('div', { class: 'field' }, h('label', { for: power.id }, 'Besaran'), power)), fig, out);
+}
+
+function mixedHeightVisual() {
+  const out = h('div');
+  const feet = numberField({ label: 'Kaki (ft)', value: 5, min: 0, max: 1000, onChange: update });
+  const inches = numberField({ label: 'Inci tambahan (in)', value: 10, min: 0, max: 11.999, onChange: update });
+  function update() {
+    const f = feet.read(), i = inches.read();
+    if (!f.ok || !i.ok) { out.replaceChildren(h('p', {}, 'Perbaiki isian yang bertanda merah.')); return; }
+    const sol = Core.feetInchesSteps(f.value, i.value);
+    out.replaceChildren(h('div', { class: 'result' }, Core.shown(sol.result), ' cm'), stepsList(sol.steps));
+  }
+  update();
+  return h('div', {}, h('div', { class: 'row' }, feet.el, inches.el), out);
+}
+
+const LENGTH_USES = { mm: 'Komponen kecil.', cm: 'Ukuran benda sehari-hari.', m: 'Satuan dasar SI.', km: 'Jarak perjalanan.', in: 'Layar dan komponen.', ft: 'Tinggi dan konstruksi.', mi: 'Jarak di AS.', nm: 'Skala sangat kecil.', um: 'Mikrometer; kunci kode: um.', yd: '1 yd = 3 ft.', nmi: 'Navigasi laut dan udara.' };
+MODULES.panjang = {
+  id: 'panjang', cat: 'length', kicker: 'Modul 3', title: 'Panjang', lead: 'Bendanya tetap sama. Ukuran satuannya menentukan berapa banyak unit yang diperlukan.',
+  converter: { value: 5, from: 'ft', to: 'cm' }, quiz: () => Quiz(QUIZ.panjang, { startRetry: takeRetry('panjang') }),
+  understand: () => [h('p', {}, 'Panjang adalah jarak antara dua titik. Satuan dasar SI-nya meter (m). Pada sistem metrik, milli berarti seperseribu, centi seperseratus, dan kilo seribu.'), h('div', { class: 'formula-box' }, '1 m = 100 cm = 1.000 mm; 1 km = 1.000 m'), h('p', {}, 'Jembatan ke satuan imperial adalah 1 in = 2,54 cm tepat. Dari sana: 1 ft = 12 in dan 1 mi = 5.280 ft.')],
+  visuals: [
+    { title: 'Coba: penggaris ganda', text: 'Satu batang diukur dengan dua penggaris. Mengganti satuan tidak mengubah panjang batang.', build: lengthRulerVisual },
+    { title: 'Coba: luas dan volume', text: 'Panjang memakai faktor satu kali, luas dua kali, volume tiga kali. Pilih besaran dan lihat langkahnya.', build: lengthPowerVisual },
+    { title: 'Coba: kaki dan inci', text: '5 ft 10 in berarti 5 kaki ditambah 10 inci. Ubah komponennya di bawah.', build: mixedHeightVisual },
+  ],
+  unitsContent: () => [unitTable('length', LENGTH_USES, false), h('p', {}, '1 ft = 12 × 0,0254 m = 0,3048 m. 1 mi = 5.280 × 0,3048 m = 1.609,344 m. Faktor cm adalah 0,01 karena 1 cm = 0,01 m.')],
+  examples: [
+    { title: 'Contoh 1: metrik', problem: '250 cm → m', solution: () => Core.convertSteps('length', 250, 'cm', 'm') },
+    { title: 'Contoh 2: lintas keluarga', problem: '5 ft → cm', solution: () => Core.convertSteps('length', 5, 'ft', 'cm') },
+    { title: 'Contoh 3: jarak perjalanan', problem: '100 mi → km', solution: () => Core.convertSteps('length', 100, 'mi', 'km') },
+    { title: 'Contoh 4: tinggi gabungan', problem: '5 ft 10 in → cm', solution: () => Core.feetInchesSteps(5, 10) },
+    { title: 'Contoh 5: luas', problem: '2 m² → cm²', solution: () => Core.powerSteps(2, 'm', 'cm', 2) },
+    { title: 'Contoh 6: volume', problem: '1 m³ → cm³', solution: () => Core.powerSteps(1, 'm', 'cm', 3) },
+  ],
+  pitfalls: [['Arah faktor.', 'cm = 0,01 dalam tabel berperantara meter; angka 100 adalah jumlah cm dalam 1 m.'], ['Luas dan volume.', '1 m² = 10.000 cm² dan 1 m³ = 1.000.000 cm³. Jangan memakai faktor panjang sekali saja.'], ['Kaki dan inci.', '5 ft 10 in bukan 5,10 ft. Jumlahkan kaki × 12 dan inci terlebih dahulu.']],
+  advanced: () => [unitTable('length', LENGTH_USES, true), Converter('length', { value: 1, from: 'nmi', to: 'km', advanced: true }), pythonSection({ python: { text: 'Semua satuan dinormalisasi ke meter. Faktor asal dikali, faktor tujuan dibagi.', file: 'converters/length.py', code: 'FACTORS = {"cm": 0.01, "m": 1, "in": 0.0254, "ft": 0.3048}\n# Cuplikan; tabel lengkap ada di converters/length.py\nresult = value * factors[from_unit] / factors[to_unit]' } })],
+};
+PAGES.panjang = (main) => renderModule(main, MODULES.panjang);
 
 function buildNav() {
   const nav = document.getElementById('nav');
