@@ -43,6 +43,7 @@ const run = (c) => {
     case 'weight': return C.weightSteps(c.m, c.g).result;
     case 'parse': return C.parseNumber(c.text);
     case 'fmt': return C.fmt(c.value, c.digits);
+    case 'check': return C.checkNumeric(c.user, c.expected, c.dp).ok;
     default: throw new Error('op tidak dikenal ' + c.op);
   }
 };
@@ -52,7 +53,9 @@ const out = cases.map((c) => {
 process.stdout.write(JSON.stringify(out));
 """
 
-pytestmark = pytest.mark.skipif(NODE is None, reason="Node.js tidak tersedia")
+@pytest.fixture(autouse=True)
+def require_node():
+    assert NODE, "Node.js diperlukan untuk memverifikasi mesin hitung HTML."
 
 
 def run_js(cases):
@@ -222,9 +225,7 @@ def test_page_has_no_network_dependencies():
 
 
 def test_delta_explanation_uses_the_selected_units():
-    solution = run_js([{"op": "delta_details", "value": -18, "from": "F", "to": "K"}])[
-        0
-    ]["value"]
+    solution = run_js([{"op": "delta_details", "value": -18, "from": "F", "to": "K"}])[0]["value"]
     assert solution["result"] == pytest.approx(-10)
     explanation = " ".join(solution["steps"][-1]["lines"])
     assert "°F dan K" in explanation
@@ -266,3 +267,54 @@ console.log(JSON.stringify(result));
     assert got["hinted"]["assisted"] is True
     assert got["lesson"] is True
     assert got["reset"] is True
+
+
+def test_answer_rounding_matches_the_requested_precision():
+    cases = [
+        ({"user": 4.137, "expected": 4.136854, "dp": 3}, True),
+        ({"user": 4.136854, "expected": 4.136854, "dp": 3}, True),
+        ({"user": 4.1364, "expected": 4.136854, "dp": 3}, False),
+        ({"user": 2.50001, "expected": 2.5, "dp": "exact"}, False),
+    ]
+    results = run_js([{"op": "check", **case} for case, _ in cases])
+    assert [got["value"] for got in results] == [expected for _, expected in cases]
+
+
+def test_quiz_bank_has_independently_checked_answers():
+    driver = r"""
+const fs = require('fs');
+const html = fs.readFileSync(process.argv[1], 'utf8');
+const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(x => x[1]);
+scripts.forEach(x => new Function(x));
+const Q = new Function(scripts[0] + scripts[1] + ';return QUIZ;')();
+console.log(JSON.stringify(Object.fromEntries(Object.entries(Q).map(([topic, qs]) =>
+    [topic, qs.map(q => ({id:q.id, value:q.type === 'num' ? q.solve().result : q.correct,
+        steps:q.type === 'num' ? q.solve().steps.length : null}))]))));
+"""
+    done = subprocess.run(
+        [NODE, "-e", driver, str(HTML)], capture_output=True, text=True, check=True
+    )
+    bank = json.loads(done.stdout)
+    # Posisi pilihan konsep diperiksa terhadap pernyataan fisika pada setiap soal.
+    # Nilai numerik berikut adalah acuan terpisah dari closure solve() HTML.
+    expected = {
+        "tekanan": [0, 0, 0, 2000, 2.5, 4.1368543759008, 303.975, 1, 2, 3.21957233381376],
+        "gaya": [0, 1, 0, 6, 49.03325, 203.94324259558564, 2.22411080763025, 1, 0, 113.4 / 9.80665],
+        "panjang": [0, 1, 0, 2.5, 152.4, 160.9344, 1.968503937007874, 20000, 1, 177.8],
+        "suhu": [0, 1, 1, 77, 37, 273.15, -459.67, 18, 2, 80.33],
+    }
+    ids = []
+    for topic, values in expected.items():
+        assert len(bank[topic]) == 10
+        for question, value in zip(bank[topic], values, strict=True):
+            assert question["value"] == pytest.approx(value), question["id"]
+            if question["steps"] is not None:
+                assert question["steps"] == 6
+            ids.append(question["id"])
+    assert len(bank["gabungan"]) == 12
+    for topic in expected:
+        for index in (0, 5, 9):
+            question = next(q for q in bank["gabungan"] if q["id"] == f"gabungan-{topic}-{index}")
+            assert question["value"] == pytest.approx(expected[topic][index])
+            ids.append(question["id"])
+    assert len(ids) == len(set(ids)) == 52
