@@ -30,6 +30,10 @@ body[data-topic="tekanan"] { --accent: #0b5f8a; --accent-soft: #e2f1f9; }
 body[data-topic="gaya"] { --accent: #a64300; --accent-soft: #fdeede; }
 body[data-topic="panjang"] { --accent: #1d6b3a; --accent-soft: #e3f4ea; }
 body[data-topic="suhu"] { --accent: #a3224f; --accent-soft: #fbe6ee; }
+[data-topic="tekanan"] { --accent: #0b5f8a; --accent-soft: #e2f1f9; }
+[data-topic="gaya"] { --accent: #a64300; --accent-soft: #fdeede; }
+[data-topic="panjang"] { --accent: #1d6b3a; --accent-soft: #e3f4ea; }
+[data-topic="suhu"] { --accent: #a3224f; --accent-soft: #fbe6ee; }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -90,6 +94,102 @@ main:focus { outline: none; }
   padding: .6rem .9rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1rem 0;
 }
 .notice.info { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ---------- Komponen ---------- */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .9rem; }
+a.card { display: block; color: inherit; text-decoration: none; border-top: 4px solid var(--accent); }
+a.card:hover { background: var(--soft); }
+a.card h3 { color: var(--accent); margin-bottom: .25rem; }
+a.card p { margin: 0; color: var(--muted); font-size: .95rem; }
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer; color: #fff; background: var(--accent);
+  border: 1px solid var(--accent); padding: .5rem .95rem; border-radius: 8px;
+}
+.btn:hover { filter: brightness(1.12); }
+.btn.secondary { background: var(--panel); color: var(--accent); }
+.btn.secondary:hover { background: var(--accent-soft); filter: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: .5rem; margin: .7rem 0; }
+.field { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.field > label, .field > .lbl { font-weight: 600; font-size: .92rem; }
+.field input[type="text"], .field select {
+  font: inherit; width: 100%; min-width: 0; padding: .45rem .6rem;
+  border: 1px solid #7d8696; border-radius: 8px; background: #fff; color: var(--ink);
+}
+.field input[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
+.err { color: var(--bad); font-size: .88rem; min-height: 1.3em; }
+.hint { color: var(--muted); font-size: .88rem; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; align-items: start; }
+.slider-field { display: flex; flex-direction: column; gap: .15rem; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: .2rem 0 .5rem; }
+.check { display: flex; align-items: center; gap: .5rem; margin: .5rem 0; }
+.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+.result {
+  background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius);
+  padding: .75rem 1rem; font-family: var(--font-math); font-size: 1.25rem; overflow-wrap: anywhere;
+}
+.result .big { font-size: 1.5rem; font-weight: 700; }
+.result.err-box { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); font-family: var(--font); font-size: 1rem; }
+.steps { list-style: none; margin: .6rem 0; padding: 0; counter-reset: st; display: grid; gap: .55rem; }
+.steps > li {
+  counter-increment: st; position: relative; background: #fff; border: 1px solid var(--line);
+  border-radius: 8px; padding: .5rem .8rem .55rem 2.7rem;
+}
+.steps > li::before {
+  content: counter(st); position: absolute; left: .7rem; top: .6rem; width: 1.55rem; height: 1.55rem;
+  border-radius: 50%; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 700;
+  display: grid; place-items: center;
+}
+.steps .st-title { font-weight: 700; font-size: .9rem; color: var(--accent); }
+.steps .fl { font-family: var(--font-math); font-size: 1.07rem; overflow-wrap: anywhere; line-height: 1.5; }
+.formula-box {
+  font-family: var(--font-math); font-size: 1.2rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); padding: .55rem .9rem; margin: .6rem 0; overflow-wrap: anywhere;
+}
+.pitfall {
+  border-left: 4px solid var(--warn); background: var(--warn-soft);
+  padding: .55rem .9rem; border-radius: 0 8px 8px 0; margin: .7rem 0;
+}
+.pitfall strong:first-child { color: var(--warn); }
+.fig { margin: 0; border: 1px solid var(--line); background: #fff; border-radius: var(--radius); padding: .5rem; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig figcaption { color: var(--muted); font-size: .88rem; padding: .3rem .4rem 0; }
+.split { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin: 1rem 0; }
+.split > * { min-width: 0; }
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "controls visual" "steps visual"; }
+  .split > .controls { grid-area: controls; }
+  .split > .visual { grid-area: visual; align-self: start; position: sticky; top: 1rem; }
+  .split > .steps-area { grid-area: steps; }
+}
+.table-wrap { overflow-x: auto; margin: .6rem 0; }
+table.data { border-collapse: collapse; width: 100%; font-size: .95rem; background: #fff; }
+table.data th, table.data td { text-align: left; padding: .45rem .65rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data th { background: var(--soft); font-size: .88rem; }
+table.data td.num { font-family: var(--font-math); white-space: nowrap; }
+details { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: .45rem .85rem; margin: .7rem 0; }
+details > summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: .5rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+.tabs button {
+  font: inherit; cursor: pointer; padding: .35rem .8rem; border-radius: 999px;
+  border: 1px solid #7d8696; background: #fff; color: var(--ink);
+}
+.tabs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.pill { display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--accent-soft); color: var(--accent); }
+.toc { display: flex; flex-wrap: wrap; gap: .4rem; margin: .8rem 0 0; }
+.toc button { font: inherit; font-size: .9rem; cursor: pointer; padding: .25rem .7rem; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--accent); }
+.toc button:hover { background: var(--accent-soft); }
+svg .t { font: 14px var(--font); fill: var(--ink); }
+svg .ts { font: 13px var(--font); fill: #475163; }
+svg .tm { font: 15px var(--font-math); fill: var(--ink); }
+svg .tb { font: 700 14px var(--font); fill: var(--accent); }
+svg .ln { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+svg .ac { stroke: var(--accent); fill: none; stroke-width: 3; }
+svg .acf { fill: var(--accent); }
+svg .soft { fill: var(--soft); stroke: var(--line); }
+svg .tint { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -634,7 +734,7 @@ const Core = (function () {
     convertLinear, convertTemperature, convertDelta, toCelsius, fromCelsius,
     convertSteps, temperatureSteps, deltaSteps, powerSteps, feetInchesSteps,
     pressureFromForce, gaugeToAbsolute, newtonSteps, accelerationSteps, weightSteps,
-    checkNumeric, label, step,
+    checkNumeric, label, step, TEMP_TO_C, TEMP_FROM_C,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   return api;
@@ -679,6 +779,267 @@ function announce(text) {
   setTimeout(() => { live.textContent = text; }, 30);
 }
 
+/* ---------- Komponen bersama ---------- */
+let uidCounter = 0;
+const uid = (prefix) => (prefix || 'id') + '-' + ++uidCounter;
+const toInputText = (n) => String(n).replace('.', ',');
+const CAT_LABEL = { pressure: 'Tekanan', force: 'Gaya', length: 'Panjang', temperature: 'Suhu' };
+
+function unitsOf(cat) {
+  return cat === 'temperature' ? Core.TEMP_UNITS : Core.CATEGORIES[cat].units;
+}
+
+/* Kolom angka dengan pesan kesalahan di dekatnya. */
+function numberField(o) {
+  const id = o.id || uid('nf');
+  const input = h('input', {
+    type: 'text', id, inputmode: 'decimal', autocomplete: 'off', spellcheck: 'false',
+    value: o.value === undefined ? '' : toInputText(o.value),
+  });
+  const err = h('div', { class: 'err', id: id + '-err', 'aria-live': 'polite' });
+  input.setAttribute('aria-describedby', id + '-err' + (o.hint ? ' ' + id + '-hint' : ''));
+  const el = h('div', { class: 'field' },
+    h('label', { for: id }, o.label),
+    input,
+    o.hint ? h('div', { class: 'hint', id: id + '-hint' }, o.hint) : null,
+    err);
+  function read() {
+    const p = Core.parseNumber(input.value);
+    if (!p.ok) return p;
+    if (o.positive && p.value <= 0) return { ok: false, error: 'Nilai harus lebih besar dari nol.' };
+    if (o.min !== undefined && p.value < o.min) return { ok: false, error: o.minMsg || 'Nilai minimal ' + Core.fmt(o.min) + '.' };
+    if (o.max !== undefined && p.value > o.max) return { ok: false, error: 'Nilai maksimal ' + Core.fmt(o.max) + '.' };
+    return p;
+  }
+  function validate() {
+    const r = read();
+    input.setAttribute('aria-invalid', r.ok ? 'false' : 'true');
+    err.textContent = r.ok ? '' : r.error;
+    return r;
+  }
+  input.addEventListener('input', () => {
+    const r = validate();
+    if (o.onChange) o.onChange(r);
+  });
+  return {
+    el, input, read, validate,
+    setValue(n) { input.value = toInputText(n); validate(); },
+  };
+}
+
+/* Slider dengan kolom angka yang saling terhubung. */
+function sliderField(o) {
+  const range = h('input', { type: 'range', min: o.min, max: o.max, step: o.step, value: o.value });
+  range.setAttribute('aria-label', o.label + ', geser');
+  const nf = numberField({
+    label: o.label + (o.unit ? ' (' + o.unit + ')' : ''), value: o.value, hint: o.hint,
+    positive: o.positive, min: o.fieldMin, max: o.fieldMax, minMsg: o.minMsg,
+    onChange(r) {
+      if (r.ok) range.value = Math.min(Math.max(r.value, o.min), o.max);
+      if (o.onChange) o.onChange(r);
+    },
+  });
+  range.addEventListener('input', () => {
+    nf.setValue(Number(range.value));
+    if (o.onChange) o.onChange({ ok: true, value: Number(range.value) });
+  });
+  return {
+    el: h('div', { class: 'slider-field' }, nf.el, range),
+    read: nf.read,
+    setValue(n) { nf.setValue(n); range.value = Math.min(Math.max(n, o.min), o.max); },
+  };
+}
+
+/* Pilihan satuan; satuan lanjutan disembunyikan kecuali diminta. */
+function unitSelect(o) {
+  const id = uid('us');
+  const select = h('select', { id });
+  function fill(advanced) {
+    const previous = select.value || o.value;
+    select.replaceChildren();
+    const units = unitsOf(o.cat);
+    for (const key of Object.keys(units)) {
+      if (units[key].adv && !advanced && key !== previous) continue;
+      select.append(h('option', { value: key }, units[key].label + ' — ' + units[key].name));
+    }
+    if ([...select.options].some((opt) => opt.value === previous)) select.value = previous;
+  }
+  fill(!!o.advanced);
+  select.addEventListener('change', () => { if (o.onChange) o.onChange(select.value); });
+  return {
+    el: h('div', { class: 'field' }, h('label', { for: id }, o.label), select),
+    select, fill,
+    get value() { return select.value; },
+    set value(v) { select.value = v; },
+  };
+}
+
+/* Daftar langkah hitung dari data solusi: { steps: [{title, lines}] }. */
+function stepsList(steps) {
+  return h('ol', { class: 'steps' }, steps.map((st) =>
+    h('li', {}, h('div', { class: 'st-title' }, st.title), st.lines.map((line) => h('div', { class: 'fl' }, line)))));
+}
+
+/* Langkah dibuka satu per satu. getSolution() mengembalikan { steps, ... }. */
+function stepper(getSolution, o) {
+  o = o || {};
+  const holder = h('div');
+  const status = h('div', { class: 'hint', 'aria-live': 'polite' });
+  let shown = 1;
+  let total = 1;
+  const next = h('button', { class: 'btn', type: 'button' }, 'Langkah berikutnya');
+  const all = h('button', { class: 'btn secondary', type: 'button' }, 'Tampilkan semua');
+  const again = h('button', { class: 'btn secondary', type: 'button' }, 'Ulangi');
+  function draw(announceTitle) {
+    const sol = getSolution();
+    total = sol.steps.length;
+    shown = Math.min(Math.max(shown, 1), total);
+    holder.replaceChildren(stepsList(sol.steps.slice(0, shown)));
+    next.disabled = shown >= total;
+    all.disabled = shown >= total;
+    status.textContent = 'Langkah ' + shown + ' dari ' + total + '.';
+    if (announceTitle) announce('Langkah ' + shown + ': ' + sol.steps[shown - 1].title);
+    if (o.onShown) o.onShown(shown, total);
+  }
+  next.addEventListener('click', () => { shown += 1; draw(true); });
+  all.addEventListener('click', () => { shown = total; draw(true); });
+  again.addEventListener('click', () => { shown = 1; draw(false); });
+  draw(false);
+  return h('div', { class: 'stepper' }, holder, status, h('div', { class: 'btn-row' }, next, all, again));
+}
+
+/* Peta perantara: satuan asal -> perantara -> satuan tujuan (tersusun ke bawah). */
+function hubSvg(info) {
+  const svg = s('svg', { viewBox: '0 0 430 296', role: 'img', 'aria-label': info.aria });
+  svg.append(s('title', {}, 'Peta konversi lewat satuan perantara'), s('desc', {}, info.aria));
+  svg.append(s('defs', {}, s('marker', { id: 'hubArrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, s('path', { d: 'M0 0L10 5L0 10z', class: 'acf' }))));
+  const boxes = [
+    { y: 22, head: 'Satuan asal', main: info.from, note: info.fromNote, mid: false },
+    { y: 122, head: 'Satuan perantara', main: info.base, note: info.baseNote, mid: true },
+    { y: 222, head: 'Satuan tujuan', main: info.to, note: info.toNote, mid: false },
+  ];
+  for (const b of boxes) {
+    svg.append(
+      s('text', { x: 10, y: b.y - 6, class: 'ts' }, b.head),
+      s('rect', { x: 10, y: b.y, width: 200, height: 64, rx: 10, class: b.mid ? 'tint' : 'soft' }),
+      s('text', { x: 110, y: b.y + 28, 'text-anchor': 'middle', class: 'tb' }, b.main),
+      s('text', { x: 110, y: b.y + 50, 'text-anchor': 'middle', class: 'ts' }, b.note));
+  }
+  const arrows = [{ y1: 88, y2: 120, small: 'ke perantara', text: info.step1 }, { y1: 188, y2: 220, small: 'ke tujuan', text: info.step2 }];
+  for (const a of arrows) {
+    svg.append(
+      s('line', { x1: 110, y1: a.y1, x2: 110, y2: a.y2, class: 'ac', 'marker-end': 'url(#hubArrow)' }),
+      s('text', { x: 132, y: a.y1 + 12, class: 'ts' }, a.small),
+      s('text', { x: 132, y: a.y1 + 30, class: 'tm' }, a.text));
+  }
+  return svg;
+}
+function hubInfo(cat, from, to) {
+  if (cat === 'temperature') {
+    const T = Core.TEMP_UNITS;
+    return {
+      from: T[from].label, to: T[to].label, base: '°C',
+      fromNote: 'titik nol: ' + Core.fmt(T[from].freeze) + ' ' + T[from].label,
+      baseNote: 'titik nol: 0 °C',
+      toNote: 'titik nol: ' + Core.fmt(T[to].freeze) + ' ' + T[to].label,
+      step1: Core.TEMP_TO_C[from].replace('°C = ', ''),
+      step2: Core.TEMP_FROM_C[to].replace(/^[^=]*= /, ''),
+      aria: 'Suhu ' + T[from].label + ' diubah ke derajat Celsius, lalu ke ' + T[to].label + '.',
+    };
+  }
+  const c = Core.CATEGORIES[cat];
+  const A = c.units[from];
+  const B = c.units[to];
+  return {
+    from: A.label, to: B.label, base: c.base,
+    fromNote: '1 ' + A.label + ' = ' + Core.fmt(A.f, 6) + ' ' + c.base,
+    baseNote: 'satuan dasar',
+    toNote: '1 ' + B.label + ' = ' + Core.fmt(B.f, 6) + ' ' + c.base,
+    step1: '× ' + Core.fmt(A.f, 6),
+    step2: '÷ ' + Core.fmt(B.f, 6),
+    aria: A.label + ' dikali ' + Core.fmt(A.f, 6) + ' menjadi ' + c.base + ', lalu dibagi ' + Core.fmt(B.f, 6) + ' menjadi ' + B.label + '.',
+  };
+}
+
+/* Konverter bebas dengan peta perantara dan semua langkah hitung. */
+function Converter(cat, o) {
+  o = o || {};
+  const defaults = {
+    pressure: ['atm', 'psi'], force: ['kgf', 'N'], length: ['ft', 'cm'], temperature: ['C', 'F'],
+  }[cat];
+  const root = h('div', { class: 'split conv' });
+  const value = numberField({
+    label: 'Nilai', value: o.value === undefined ? 1 : o.value,
+    hint: 'Contoh: 12 atau 1,5 (tanpa pemisah ribuan)', onChange: render,
+  });
+  const from = unitSelect({ label: 'Dari', cat, value: o.from || defaults[0], onChange: render });
+  const to = unitSelect({ label: 'Ke', cat, value: o.to || defaults[1], onChange: render });
+  const swap = h('button', { class: 'btn secondary', type: 'button' }, 'Tukar satuan');
+  const advBox = h('input', { type: 'checkbox', id: uid('adv') });
+  const advLabel = Object.values(unitsOf(cat)).filter((u) => u.adv).map((u) => u.label).join(', ');
+  const out = h('div', { 'aria-live': 'polite' });
+  const hub = h('figure', { class: 'fig' });
+  const stepsHolder = h('div');
+  swap.addEventListener('click', () => {
+    const a = from.value;
+    from.value = to.value;
+    to.value = a;
+    render();
+  });
+  advBox.addEventListener('change', () => { from.fill(advBox.checked); to.fill(advBox.checked); render(); });
+  function render() {
+    const v = value.read();
+    hub.replaceChildren(hubSvg(hubInfo(cat, from.value, to.value)));
+    if (!v.ok) {
+      out.replaceChildren(h('div', { class: 'result err-box' }, v.error));
+      stepsHolder.replaceChildren();
+      return;
+    }
+    try {
+      const sol = cat === 'temperature'
+        ? Core.temperatureSteps(v.value, from.value, to.value)
+        : Core.convertSteps(cat, v.value, from.value, to.value);
+      out.replaceChildren(h('div', { class: 'result' },
+        Core.fmt(v.value) + ' ' + Core.label(cat, from.value) + ' ' + Core.eqv(sol.result) + ' ',
+        h('span', { class: 'big' }, sol.unit)));
+      stepsHolder.replaceChildren(h('h3', {}, 'Langkah hitung'), stepsList(sol.steps));
+    } catch (e) {
+      out.replaceChildren(h('div', { class: 'result err-box', role: 'alert' }, e.message));
+      stepsHolder.replaceChildren();
+    }
+  }
+  root.append(
+    h('div', { class: 'controls' },
+      h('div', { class: 'row' }, value.el, from.el, to.el),
+      h('div', { class: 'btn-row' }, swap),
+      h('label', { class: 'check', for: advBox.id }, advBox, 'Sertakan satuan lanjutan (' + advLabel + ')'),
+      out),
+    h('div', { class: 'visual' }, hub),
+    h('div', { class: 'steps-area' }, stepsHolder));
+  render();
+  return root;
+}
+
+/* Penanda skala dengan langkah yang enak dibaca (1, 2, 5 x 10^k). */
+function niceStep(range, maxTicks) {
+  if (!(range > 0)) return 1;
+  const raw = range / maxTicks;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 5, 10]) if (m * pow >= raw) return m * pow;
+  return 10 * pow;
+}
+function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(x)));
+  for (const m of [1, 2, 5, 10]) if (m * pow >= x) return m * pow;
+  return 10 * pow;
+}
+
+/* Satu bagian halaman dengan judul. */
+function section(title, ...kids) {
+  return h('section', { class: 'section', 'aria-label': title }, h('h2', {}, title), kids);
+}
+
 /* ---------- Navigasi ---------- */
 const ROUTES = [
   { id: 'mulai', label: 'Mulai', topic: 'mulai' },
@@ -690,6 +1051,139 @@ const ROUTES = [
   { id: 'rumus', label: 'Rumus', topic: 'mulai' },
 ];
 const PAGES = {};
+
+/* ---------- Halaman Mulai ---------- */
+function oneQuantityFigure() {
+  const U = Core.CATEGORIES.length.units;
+  const keys = ['m', 'cm', 'mm', 'in', 'ft'];
+  let unit = 'cm';
+  const fig = h('figure', { class: 'fig' });
+  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Pilih skala pengukur' });
+  const caption = h('figcaption');
+  const buttons = keys.map((k) => {
+    const b = h('button', { type: 'button', onclick() { unit = k; draw(); } }, 'Skala ' + U[k].label);
+    tabs.append(b);
+    return b;
+  });
+  function draw() {
+    const X = 1 / U[unit].f;
+    const label = U[unit].label;
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', keys[i] === unit ? 'true' : 'false'));
+    const x0 = 20;
+    const x1 = 440;
+    const svg = s('svg', {
+      viewBox: '0 0 460 150', role: 'img',
+      'aria-label': 'Satu batang yang panjangnya 1 meter diukur dengan skala ' + label + ': panjangnya ' + Core.fmt(X) + ' ' + label + '.',
+    });
+    svg.append(
+      s('text', { x: x0, y: 22, class: 't' }, 'Batang yang sama (1 m)'),
+      s('rect', { x: x0, y: 30, width: x1 - x0, height: 26, rx: 4, class: 'tint' }),
+      s('line', { x1: x0, y1: 82, x2: x1, y2: 82, class: 'ln' }));
+    const step = niceStep(X, 8);
+    const count = Math.floor(X / step + 1e-9);
+    for (let k = 0; k <= count; k += 1) {
+      const t = k * step;
+      const x = x0 + (t / X) * (x1 - x0);
+      svg.append(s('line', { x1: x, y1: 82, x2: x, y2: 92, class: 'ln' }), s('text', { x, y: 108, 'text-anchor': 'middle', class: 'ts' }, Core.fmt(t, 4)));
+    }
+    if (X - count * step > step * 0.2) {
+      svg.append(s('line', { x1: x1, y1: 82, x2: x1, y2: 96, class: 'ac' }), s('text', { x: x1, y: 124, 'text-anchor': 'middle', class: 'tb' }, Core.fmt(X, 6) + ' ' + label));
+    }
+    svg.append(s('text', { x: x0, y: 138, class: 'ts' }, 'Skala ' + label + ' (garis-garis di bawah batang)'));
+    fig.replaceChildren(tabs, svg, caption);
+    const parts = keys.filter((k) => k !== 'm').map((k) => Core.fmt(1 / U[k].f, 6) + ' ' + U[k].label);
+    caption.textContent = '1 m = ' + parts.join(' = ') + '. Batangnya sama, hanya angkanya yang berubah.';
+  }
+  draw();
+  return fig;
+}
+
+function converterWithTabs() {
+  const holder = h('div');
+  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Pilih jenis konversi' });
+  const cats = ['pressure', 'force', 'length', 'temperature'];
+  let current = 'length';
+  const buttons = cats.map((c) => {
+    const b = h('button', { type: 'button', onclick() { current = c; draw(); } }, CAT_LABEL[c]);
+    tabs.append(b);
+    return b;
+  });
+  function draw() {
+    buttons.forEach((b, i) => b.setAttribute('aria-pressed', cats[i] === current ? 'true' : 'false'));
+    holder.replaceChildren(Converter(current));
+  }
+  draw();
+  return h('div', {}, tabs, holder);
+}
+
+function predictionGame() {
+  const cats = ['pressure', 'force', 'length'];
+  const root = h('div', { class: 'card' });
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let q = null;
+  function newQuestion() {
+    const cat = pick(cats);
+    const keys = Object.keys(Core.CATEGORIES[cat].units).filter((k) => !Core.CATEGORIES[cat].units[k].adv);
+    let a;
+    let b;
+    do { a = pick(keys); b = pick(keys); } while (a === b);
+    q = { cat, a, b, answered: false };
+    draw();
+  }
+  function answer(guessBigger) {
+    const U = Core.CATEGORIES[q.cat].units;
+    const bigger = U[q.a].f > U[q.b].f;
+    const sol = Core.convertSteps(q.cat, 1, q.a, q.b);
+    const base = Core.CATEGORIES[q.cat].base;
+    const why = '1 ' + U[q.a].label + ' = ' + Core.fmt(U[q.a].f, 8) + ' ' + base + ', sedangkan 1 ' + U[q.b].label + ' = ' + Core.fmt(U[q.b].f, 8) + ' ' + base +
+      '. ' + U[q.b].label + ' lebih ' + (bigger ? 'kecil' : 'besar') + ', jadi angkanya ' + (bigger ? 'membesar' : 'mengecil') + ': 1 ' + U[q.a].label + ' ' + Core.eqv(sol.result) + ' ' + U[q.b].label + '.';
+    q.answered = true;
+    q.ok = guessBigger === bigger;
+    q.why = why;
+    draw();
+  }
+  function draw() {
+    const U = Core.CATEGORIES[q.cat].units;
+    const bigBtn = h('button', { class: 'btn', type: 'button', disabled: q.answered, onclick() { answer(true); } }, 'Membesar');
+    const smallBtn = h('button', { class: 'btn', type: 'button', disabled: q.answered, onclick() { answer(false); } }, 'Mengecil');
+    const nextBtn = h('button', { class: 'btn secondary', type: 'button', onclick: newQuestion }, 'Soal lain');
+    root.replaceChildren(
+      h('p', {}, h('strong', {}, CAT_LABEL[q.cat] + ': '), 'mengubah 1 ' + U[q.a].label + ' (' + U[q.a].name + ') ke ' + U[q.b].label + ' (' + U[q.b].name + '). Angkanya akan...'),
+      h('div', { class: 'btn-row' }, bigBtn, smallBtn, nextBtn),
+      ...(q.answered ? [h('div', { class: q.ok ? 'result' : 'pitfall', role: 'status' }, h('strong', {}, q.ok ? 'Tepat. ' : 'Belum tepat. '), q.why)] : []));
+  }
+  newQuestion();
+  return root;
+}
+
+PAGES.mulai = function (main) {
+  main.append(
+    h('div', { class: 'page-head' },
+      h('div', { class: 'kicker' }, 'Mulai'),
+      h('h1', {}, 'Satu besaran, banyak cara menulisnya'),
+      h('p', { class: 'lead' }, 'Panjang meja tetap sama, entah kamu menulisnya 1 m atau 100 cm. Halaman ini membantumu mengingat tekanan, gaya, panjang, dan suhu: pahami idenya, coba visualnya, ikuti langkah hitung, lalu uji dirimu dengan kuis.')),
+    section('Satuan hanya cara menulis',
+      h('p', {}, '1 m dan 100 cm adalah panjang yang sama. Yang berubah hanya penggarisnya: satuan yang lebih kecil membutuhkan angka yang lebih besar untuk besaran yang sama. Pilih skala di bawah dan lihat batang yang sama diukur ulang.'),
+      oneQuantityFigure()),
+    section('Semua lewat satu satuan perantara',
+      h('p', {}, 'Kalau ada 6 satuan tekanan dan tiap pasangan butuh rumus sendiri, kamu butuh 6 × 5 = 30 rumus. Solusinya satu satuan perantara: ubah dulu ke perantara, baru ke satuan tujuan. Cukup satu rumus untuk semua pasangan.'),
+      h('div', { class: 'formula-box' }, 'hasil = nilai × faktor asal ÷ faktor tujuan'),
+      h('p', {}, 'Faktor menjawab pertanyaan: "1 satuan ini sama dengan berapa satuan perantara?" Contoh: 1 ft = 0,3048 m dan 1 cm = 0,01 m. Analogi dari dunia CS: ini seperti normalisasi data ke satu format bersama sebelum diproses.'),
+      h('div', { class: 'pitfall' }, h('strong', {}, 'Pengecualian: suhu. '), 'Titik nol tiap skala suhu berbeda, jadi selain dikali juga harus digeser. Itu dibahas di modul Suhu.'),
+      h('p', {}, 'Coba sendiri. Semua langkah hitung langsung tampil.'),
+      converterWithTabs()),
+    section('Tebak arahnya sebelum menghitung',
+      h('p', {}, 'Aturan cepat: kalau satuan tujuan lebih kecil dari satuan asal, angkanya membesar. Kalau lebih besar, angkanya mengecil. Latih nalar ini dulu, karena inilah cara paling cepat mendeteksi salah hitung.'),
+      predictionGame()),
+    section('Pilih topik',
+      h('div', { class: 'cards' },
+        [
+          ['tekanan', 'Tekanan', 'Gaya per luas. Pa, bar, atm, psi, serta gauge dan absolut.'],
+          ['gaya', 'Gaya', 'F = m × a. Newton, kgf, lbf, dan beda massa dengan berat.'],
+          ['panjang', 'Panjang', 'Metrik dan imperial, plus luas dan volume.'],
+          ['suhu', 'Suhu', 'Titik nol berbeda, perubahan suhu, dan nol mutlak.'],
+        ].map(([id, title, text]) => h('a', { class: 'card', href: '#' + id, 'data-topic': id }, h('h3', {}, title), h('p', {}, text))))));
+};
 
 function buildNav() {
   const nav = document.getElementById('nav');
