@@ -3,7 +3,16 @@ import pytest
 from ai.guardrails import check_input
 
 
-@pytest.mark.parametrize("prompt", ["Ubah 1 Pa ke bar", "Jelaskan satuan gaya", "1 in ke cm?"])
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        "Ubah 1 Pa ke bar",
+        "Jelaskan satuan gaya",
+        "1 in ke cm?",
+        "Apa itu reamur?",
+        "Apa itu Réaumur?",
+    ],
+)
 def test_accept_relevant_questions(prompt):
     assert check_input(prompt) is None
 

@@ -27,4 +27,4 @@ def converter_tab(category):
     if category == "force":
         st.caption("kgf adalah satuan gaya; kg adalah satuan massa.")
     if category == "temperature":
-        st.caption("C: Celsius · F: Fahrenheit · K: Kelvin · R: Rankine")
+        st.caption("C: Celsius · F: Fahrenheit · K: Kelvin · R: Rankine · Re: Réaumur (°Ré)")

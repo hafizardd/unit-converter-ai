@@ -61,7 +61,7 @@ dahulu, lalu buka file yang diunduh. Seluruh fitur berjalan offline tanpa Python
 atau API key.
 
 Empat modul tekanan, gaya, panjang, dan suhu menyediakan visual yang dapat diubah,
-23 contoh dengan langkah rumus, konverter, dan 52 soal kuis satu per satu. Progres
+24 contoh dengan langkah rumus, konverter, dan 52 soal kuis satu per satu. Progres
 disimpan lokal pada browser. Lihat [panduan penggunaan](belajar/README.md) dan
 [rencana serta kriteria penerimaan](docs/11-rencana-belajar-interaktif.md).
 
@@ -73,8 +73,8 @@ calling; hasil Python ditampilkan tersendiri. Penjelasan dan argumen pilihan AI 
 perlu diperiksa. Tanpa hasil tool, angka pada teks AI belum terverifikasi.
 
 Contoh: **1 Pa = 0.00001 bar**, **-40 C = -40 F**, **1 kgf = 9.80665 N**.
-kg adalah massa; kgf gaya; `um` mikrometer; `R` Rankine. Pada aplikasi Streamlit,
-gauge ↔ absolute dan konversi lintas dimensi tidak tersedia. HTML belajar memiliki
+`kg` adalah massa, `kgf` gaya, `um` mikrometer, `R` Rankine, dan `Re` Réaumur.
+Pada aplikasi Streamlit, gauge ↔ absolute dan konversi lintas dimensi tidak tersedia. HTML belajar memiliki
 simulasi gauge–absolut, gaya berat, serta luas/volume untuk menjelaskan konsepnya.
 
 ## Pemeriksaan

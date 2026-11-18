@@ -20,6 +20,9 @@ def test_negative_temperature_and_absolute_zero_error():
     app.selectbox(key="temperature_to").select("F")
     app.number_input(key="temperature_value").set_value(-40).run()
     assert "-40 C = -40 F" in app.success[-1].value
+    app.selectbox(key="temperature_to").select("Re")
+    app.number_input(key="temperature_value").set_value(25).run()
+    assert "25 C = 20 Re" in app.success[-1].value
     app.number_input(key="temperature_value").set_value(-274).run()
     assert not app.exception
     assert "nol mutlak" in app.error[0].value

@@ -152,6 +152,8 @@ ACCEPTANCE = [
     ({"op": "weight", "m": 70, "g": 9.80665}, 686.4655),
     ({"op": "accel", "F": 12, "m": 4}, 3),
     ({"op": "deltasteps", "value": 10, "from": "C", "to": "F"}, 18),
+    ({"op": "deltasteps", "value": 10, "from": "C", "to": "Re"}, 8),
+    ({"op": "deltasteps", "value": -8, "from": "Re", "to": "K"}, -10),
 ]
 
 
