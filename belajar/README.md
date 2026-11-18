@@ -26,7 +26,7 @@ Streamlit, memasang Python, menyiapkan key, atau mengakses internet.
 | Tekanan | Gaya–luas dan gauge–absolut | 5, termasuk asal psi | 10 |
 | Gaya | Gerak dari diam, massa dan gaya berat | 7, termasuk asal kgf/lbf | 10 |
 | Panjang | Penggaris cm/in, luas/volume, kaki–inci | 6 | 10 |
-| Suhu | Termometer C/F/K, titik vs perubahan | 5 | 10 |
+| Suhu | Termometer C/F/K, konversi Réaumur, titik vs perubahan | 6 | 10 |
 | Gabungan | Soal lintas empat topik, catatan jawaban terpisah | — | 12 |
 
 Setiap hitungan menampilkan diketahui/ditanya, rumus, substitusi, hitungan antara,
@@ -79,7 +79,7 @@ dan kasus batas suhu. Kunci kuis diverifikasi dengan nilai acuan terpisah.
 
 Pemeriksaan browser memakai Edge/Chromium yang sudah terpasang; dapat memilih lokasi
 dengan `--browser PATH`. File uji sementara dan profil browser terpisah dipakai
-tanpa server. Pengujian mencakup tujuh halaman, 23 contoh, 52 soal, input invalid,
+tanpa server. Pengujian mencakup tujuh halaman, 24 contoh, 52 soal, input invalid,
 slider, pertukaran satuan, mode perubahan suhu, serta lebar 360/768/1280 piksel.
 Ini pemeriksaan otomatis terarah, bukan audit aksesibilitas formal semua browser.
 

@@ -17,10 +17,13 @@ Jangan membalik faktor. Dictionary cukup satu untuk banyak pasangan satuan.
 | 0 C → K | 273.15 K |
 | -40 C → F | -40 F |
 | 0 R → K | 0 K |
+| 25 C → Re | 20 Re |
 
 Suhu punya titik nol berbeda. Lewati Celsius: F → C memakai `(value - 32) * 5 / 9`,
 K → C memakai `value - 273.15`, R → C memakai `value * 5 / 9 - 273.15`.
-Dari Celsius ke tujuan gunakan rumus kebalikannya.
+Dari Celsius ke tujuan gunakan rumus kebalikannya. Réaumur (`Re`, °Ré) berbagi
+titik nol dengan Celsius. `C → Re` memakai `value * 0.8` (4/5) dan `Re → C`
+memakai `value * 1.25` (5/4).
 
 Suhu di bawah 0 K ditolak. Toleransi `1e-9` mengatasi selisih pembulatan float
 yang sangat kecil. Sebagian pecahan tidak tersimpan tepat sebagai float, maka test
