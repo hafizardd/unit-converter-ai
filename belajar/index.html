@@ -301,9 +301,10 @@ const Core = (function () {
     C: { label: '°C', name: 'derajat Celsius', freeze: 0, boil: 100 },
     F: { label: '°F', name: 'derajat Fahrenheit', freeze: 32, boil: 212 },
     K: { label: 'K', name: 'kelvin', freeze: 273.15, boil: 373.15 },
+    Re: { label: '°Ré', name: 'derajat Réaumur', freeze: 0, boil: 80 },
     R: { label: '°R', name: 'derajat Rankine', freeze: 491.67, boil: 671.67, adv: true },
   };
-  const DELTA_PER_C = { C: 1, K: 1, F: 1.8, R: 1.8 };
+  const DELTA_PER_C = { C: 1, K: 1, F: 1.8, R: 1.8, Re: 0.8 };
   const ABS_ZERO_C = -273.15;
 
   /* ---------- Format dan baca angka (gaya Indonesia) ---------- */
@@ -400,6 +401,7 @@ const Core = (function () {
     if (unit === 'C') return value;
     if (unit === 'F') return ((value - 32) * 5) / 9;
     if (unit === 'K') return value - 273.15;
+    if (unit === 'Re') return value * 1.25;
     return (value * 5) / 9 - 273.15;
   }
 
@@ -407,6 +409,7 @@ const Core = (function () {
     if (unit === 'C') return c;
     if (unit === 'F') return (c * 9) / 5 + 32;
     if (unit === 'K') return c + 273.15;
+    if (unit === 'Re') return c * 0.8;
     return ((c + 273.15) * 9) / 5;
   }
 
@@ -478,12 +481,14 @@ const Core = (function () {
     C: '°C = nilai',
     F: '°C = (°F − 32) × 5/9',
     K: '°C = K − 273,15',
+    Re: '°C = °Ré × 5/4',
     R: '°C = °R × 5/9 − 273,15',
   };
   const TEMP_FROM_C = {
     C: 'nilai = °C',
     F: '°F = °C × 9/5 + 32',
     K: 'K = °C + 273,15',
+    Re: '°Ré = °C × 4/5',
     R: '°R = (°C + 273,15) × 9/5',
   };
 
@@ -512,6 +517,9 @@ const Core = (function () {
     } else if (from === 'K') {
       c = value - 273.15;
       line1 = 'Langkah 1 (ke °C): °C = ' + v + ' − 273,15 ' + eqv(c) + ' °C';
+    } else if (from === 'Re') {
+      c = toCelsius(value, from);
+      line1 = 'Langkah 1 (ke °C): °C = ' + v + ' × 5/4 ' + eqv(c) + ' °C';
     } else {
       const a = (value * 5) / 9;
       c = a - 273.15;
@@ -525,6 +533,7 @@ const Core = (function () {
       const a = (c2 * 9) / 5;
       line2 = 'Langkah 2 (ke °F): °F = ' + cs + ' × 9/5 + 32 = ' + fmt(a) + ' + 32 ' + eqv(result) + ' °F';
     } else if (to === 'K') line2 = 'Langkah 2 (ke K): K = ' + cs + ' + 273,15 ' + eqv(result) + ' K';
+    else if (to === 'Re') line2 = 'Langkah 2 (ke °Ré): °Ré = ' + cs + ' × 4/5 ' + eqv(result) + ' °Ré';
     else {
       const a = c2 + 273.15;
       line2 = 'Langkah 2 (ke °R): °R = (' + cs + ' + 273,15) × 9/5 = ' + fmt(a) + ' × 9/5 ' + eqv(result) + ' °R';
@@ -536,7 +545,7 @@ const Core = (function () {
       steps: [
         step('Diketahui dan ditanya', ['Diketahui: ' + v + ' ' + A.label + '.', 'Ditanya: suhu dalam ' + B.label + '.']),
         step('Rumus', [
-          'Titik nol tiap skala berbeda, jadi pakai perantara °C: kali dan geser titik nol.',
+          'Pakai °C sebagai perantara. Ikuti rasio dan pergeseran yang berlaku untuk pasangan satuan ini.',
           'Ke °C: ' + TEMP_TO_C[from],
           'Dari °C: ' + TEMP_FROM_C[to],
         ]),
@@ -571,7 +580,7 @@ const Core = (function () {
           'Perubahan suhu hanya memakai ukuran derajat. Titik nol tidak ikut, jadi tanpa + 32 dan tanpa − 273,15.',
         ]),
         step('Substitusi', [
-          'Ukuran perubahan: Δ1 °C = Δ1 K = Δ1,8 °F = Δ1,8 °R',
+          'Kenaikan 1 °C setara 1 K, 1,8 °F, 1,8 °R, atau 0,8 °Ré.',
           'Derajat ' + A.label + ' per 1 °C = ' + fmt(DELTA_PER_C[from]) + '; derajat ' + B.label + ' per 1 °C = ' + fmt(DELTA_PER_C[to]),
         ]),
         step('Hitungan antara', ['Δ ' + B.label + ' = ' + v + ' × ' + fmt(DELTA_PER_C[to]) + ' ÷ ' + fmt(DELTA_PER_C[from]) + ' ' + eqv(result)]),
@@ -2229,13 +2238,27 @@ MODULES.suhu = {
     { title: 'Coba: tiga termometer', text: 'Geser suhu Celsius. Ketiga termometer menggambarkan suhu yang sama dalam tiga skala.', build: temperatureVisual },
     { title: 'Coba: titik atau perubahan?', text: 'Bandingkan 10 °C sebagai titik suhu dan kenaikan 10 °C. Hasilnya 50 °F dan 18 °F: dua pertanyaan yang berbeda.', build: temperatureDeltaVisual },
   ],
-  unitsContent: () => [h('div', { class: 'table-wrap' }, h('table', { class: 'data' }, h('thead', {}, h('tr', {}, ['Skala', 'Beku air', 'Didih air', 'Nol mutlak'].map((x) => h('th', {}, x)))), h('tbody', {}, ['C', 'F', 'K'].map((u) => h('tr', {}, h('td', {}, Core.TEMP_UNITS[u].label), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].freeze)), h('td', {}, Core.fmt(Core.TEMP_UNITS[u].boil)), h('td', {}, Core.fmt(Core.convertTemperature(0, 'K', u)))))))), h('p', {}, 'Celsius punya 100 interval dari 0 ke 100. Fahrenheit punya 212 − 32 = 180 interval. Maka rasio ukuran intervalnya 180/100 = 9/5 = 1,8.'), h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9; K = C + 273,15'), h('p', {}, 'Ke Fahrenheit: ubah skala dahulu, lalu geser +32. Untuk membaliknya, urutan operasinya dibalik: kurangi 32 dahulu, baru kali 5/9.')],
+  unitsContent: () => [
+    h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+      h('thead', {}, h('tr', {}, ['Skala', 'Beku air', 'Didih air', 'Nol mutlak'].map((x) => h('th', {}, x)))),
+      h('tbody', {}, ['C', 'F', 'K', 'Re'].map((u) => {
+        const scale = Core.TEMP_UNITS[u];
+        return h('tr', {}, h('th', { scope: 'row' }, scale.label), h('td', {}, Core.fmt(scale.freeze)),
+          h('td', {}, Core.fmt(scale.boil)), h('td', {}, Core.fmt(Core.convertTemperature(0, 'K', u))));
+      })))),
+    h('p', {}, 'Celsius punya 100 interval dari 0 ke 100. Fahrenheit punya 212 − 32 = 180 interval. Maka rasionya 180/100 = 9/5 = 1,8.'),
+    h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9; K = C + 273,15'),
+    h('p', {}, 'Ke Fahrenheit, kali 9/5 lalu tambah 32. Dari Fahrenheit, kurangi 32 lalu kali 5/9.'),
+    h('p', {}, 'Réaumur dan Celsius sama-sama mulai di 0 pada titik beku air. Réaumur membagi rentang beku–didih menjadi 80 interval, jadi faktor dari Celsius adalah 80/100 = 4/5.'),
+    h('div', { class: 'formula-box' }, '°Ré = °C × 4/5; °C = °Ré × 5/4'),
+  ],
   examples: [
     { title: 'Contoh 1: Celsius ke Fahrenheit', problem: '25 °C → °F', solution: () => Core.temperatureSteps(25, 'C', 'F') },
     { title: 'Contoh 2: Fahrenheit ke Celsius', problem: '98,6 °F → °C', solution: () => Core.temperatureSteps(98.6, 'F', 'C') },
     { title: 'Contoh 3: lewat Celsius', problem: '300 K → °F', solution: () => Core.temperatureSteps(300, 'K', 'F') },
     { title: 'Contoh 4: nol mutlak', problem: '0 K → °F', solution: () => Core.temperatureSteps(0, 'K', 'F') },
     { title: 'Contoh 5: kenaikan suhu', problem: 'Naik 10 °C. Naik berapa °F?', solution: () => Core.deltaSteps(10, 'C', 'F') },
+    { title: 'Contoh 6: Réaumur lewat Celsius', problem: '20 °Ré → °F', solution: () => Core.temperatureSteps(20, 'Re', 'F') },
   ],
   pitfalls: [['Titik berbeda dari selisih.', 'Offset +32 dipakai untuk titik suhu Celsius ke Fahrenheit, tetapi tidak untuk selisih suhu.'], ['Kelvin tanpa derajat.', 'Tulis 273,15 K, bukan °K. Perubahan 1 K sama besar dengan perubahan 1 °C.'], ['Nol mutlak.', 'Dalam model pengantar ini titik suhu tidak boleh di bawah 0 K. Perubahan negatif tetap boleh: itu berarti pendinginan.']],
   advanced: () => [h('p', {}, 'Rankine (°R) memakai nol mutlak dan ukuran interval Fahrenheit. Di sini R selalu berarti Rankine, bukan Réaumur. R = K × 9/5; K = R × 5/9.'), Converter('temperature', { value: 491.67, from: 'R', to: 'C', advanced: true }), pythonSection({ python: { text: 'Kode memakai Celsius sebagai perantara, lalu memeriksa nol mutlak. Percabangan adalah salah satu cara menulis transformasi skala dan offset.', file: 'converters/temperature.py', code: 'celsius = (value - 32) * 5 / 9  # bila asal Fahrenheit\nif celsius < -273.15 - 1e-9:\n    raise ValueError("Di bawah nol mutlak")\ncelsius = max(celsius, -273.15)\nkelvin = celsius + 273.15  # bila tujuan kelvin' } })],
@@ -2275,7 +2298,8 @@ PAGES.rumus = (main) => {
       h('div', { class: 'formula-box' }, 'P absolut = P gauge + P atmosfer (samakan satuan)'),
       h('div', { class: 'formula-box' }, 'Luas: hasil = nilai × k²; volume: hasil = nilai × k³'), h('p', {}, 'k adalah faktor konversi panjang langsung dari satuan asal ke tujuan.')),
     section('Suhu dan perubahan suhu', h('div', { class: 'formula-box' }, 'F = C × 9/5 + 32; C = (F − 32) × 5/9'), h('div', { class: 'formula-box' }, 'K = C + 273,15; C = K − 273,15; R = K × 9/5'),
-      h('p', {}, 'R di sini Rankine. Untuk perubahan suhu: ΔF = ΔC × 9/5, ΔC = ΔF × 5/9, ΔK = ΔC. Offset tidak dipakai.'), h('p', {}, 'Nol mutlak: 0 K = −273,15 °C = −459,67 °F. Batas ini untuk titik suhu, bukan perubahan suhu.'), h('a', { href: '#suhu' }, 'Buka modul Suhu')),
+      h('div', { class: 'formula-box' }, '°Ré = °C × 4/5; °C = °Ré × 5/4'),
+      h('p', {}, 'R adalah Rankine dan Re adalah Réaumur. Untuk perubahan suhu: ΔF = ΔC × 9/5, ΔK = ΔC, dan ΔRé = ΔC × 4/5. Offset tidak dipakai.'), h('p', {}, 'Nol mutlak: 0 K = −273,15 °C = −459,67 °F = −218,52 °Ré. Batas ini untuk titik suhu, bukan perubahan suhu.'), h('a', { href: '#suhu' }, 'Buka modul Suhu')),
     section('Acuan dan cara memakai', h('p', {}, 'Faktor disamakan dengan converters/pressure.py, force.py, length.py, dan temperature.py pada repository ini. Definisi satuan mengikuti SI dan tabel konversi NIST SP 811; rujukan lengkap ada di docs/10-sumber.md.'), h('p', {}, 'Gunakan koma atau titik untuk desimal tanpa pemisah ribuan: 1,5 atau 1.5. Untuk seribu tulis 1000. Hasil memakai format Indonesia; ≈ berarti pembulatan.'), h('p', {}, 'Kamu bisa membuka semua modul tanpa urutan wajib. File ini tidak memanggil layanan AI atau mengirim jawaban ke server.')));
 };
 

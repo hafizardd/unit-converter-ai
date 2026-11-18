@@ -21,6 +21,9 @@ from converters import convert_unit
         ("temperature", 0, "K", "C", -273.15),
         ("temperature", 0, "R", "K", 0),
         ("temperature", 491.67, "R", "F", 32),
+        ("temperature", 100, "C", "Re", 80),
+        ("temperature", 20, "Re", "F", 77),
+        ("temperature", -218.52, "Re", "K", 0),
     ],
 )
 def test_reference_values(category, value, source, target, expected):
@@ -34,7 +37,9 @@ def test_reject_invalid_numbers(value):
         convert_unit("pressure", value, "Pa", "bar")
 
 
-@pytest.mark.parametrize("value,unit", [(-274, "C"), (-1, "K"), (-500, "F"), (-1, "R")])
+@pytest.mark.parametrize(
+    "value,unit", [(-274, "C"), (-1, "K"), (-500, "F"), (-1, "R"), (-218.53, "Re")]
+)
 def test_reject_below_absolute_zero(value, unit):
     with pytest.raises(ValueError, match="nol mutlak"):
         convert_unit("temperature", value, unit, "K")

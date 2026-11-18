@@ -1,6 +1,6 @@
 from converters.base import validate_number
 
-UNITS = ["C", "F", "K", "R"]
+UNITS = ["C", "F", "K", "R", "Re"]
 
 
 def convert_temperature(value, from_unit, to_unit):
@@ -13,6 +13,8 @@ def convert_temperature(value, from_unit, to_unit):
         celsius = (value - 32) * 5 / 9
     elif from_unit == "K":
         celsius = value - 273.15
+    elif from_unit == "Re":
+        celsius = value * 1.25
     else:
         celsius = value * 5 / 9 - 273.15
     if celsius < -273.15 - 1e-9:
@@ -24,6 +26,8 @@ def convert_temperature(value, from_unit, to_unit):
         result = celsius * 9 / 5 + 32
     elif to_unit == "K":
         result = celsius + 273.15
+    elif to_unit == "Re":
+        result = celsius * 0.8
     else:
         result = (celsius + 273.15) * 9 / 5
     return validate_number(result)

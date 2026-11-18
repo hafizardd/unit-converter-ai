@@ -45,7 +45,17 @@ TOPICS = {
 }
 
 TOPICS |= {unit.casefold() for data in CATEGORIES.values() for unit in data["units"]}
-TOPICS |= {"rankine", "mikrometer", "nanometer", "yard", "dina"}
+TOPICS |= {
+    "rankine",
+    "mikrometer",
+    "nanometer",
+    "yard",
+    "dina",
+    "réaumur",
+    "reaumur",
+    "reamur",
+    "ré",
+}
 
 
 def check_input(prompt, history=None):
